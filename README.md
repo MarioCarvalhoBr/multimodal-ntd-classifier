@@ -1,4 +1,3 @@
-
 # Multimodal Vision-Language for Image Classification of Neglected Tropical Diseases
 
 ![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)
@@ -32,15 +31,18 @@ multimodal-ntd-classifier/
 ├── data/
 │   ├── raw/                 # Cache de download do Kaggle
 │   └── processed/           # Dataset unificado e estratificado (Train/Val/Test)
+├── output/
+│   └── figures/             # Gráficos e PDFs da análise exploratória
 ├── src/
 │   ├── data/
 │   │   ├── dataset.py       # PyTorch Dataset customizado
-│   │   └── make_dataset.py  # Coleta, unificação e split dos dados
+│   │   ├── make_dataset.py  # Coleta, unificação e split dos dados
+│   │   └── exploratory_analysis.py # Geração de gráficos e EDA
 │   ├── features/
 │   │   └── preprocessors.py # Filtros morfológicos e inpainting
 │   ├── models/
 │   │   ├── classifier.py    # Factory Pattern e Linear Probing (CLIP/SigLIP)
-│   │   └── trainer.py       # Loop de treinamento e métricas
+│   │   ├── trainer.py       # Loop de treinamento e métricas
 │   └── run_experiment.py    # Orquestrador de testes dos modelos
 ├── .env.example             # Template de configuração de ambiente
 ├── pyproject.toml           # Dependências do Poetry
@@ -74,7 +76,7 @@ O download dos datasets é automatizado via `kagglehub`. Para isso:
 ```env
 KAGGLE_USERNAME="seu_usuario_aqui"
 KAGGLE_KEY="sua_chave_longa_aqui"
-PROCESSED_DATA_DIR="dataset/processed/Dataset-NTD-V1"
+PROCESSED_DATA_DIR="data/processed/Dataset-NTD-V1"
 ```
 
 ---
@@ -88,14 +90,24 @@ Este script baixa os datasets de Doenças Tropicais Negligenciadas, realiza o *S
 poetry run python src/data/make_dataset.py
 ```
 
-### Fase 2 e 3: Treinamento e Avaliação (Linear Probing)
+### Fase 2: Análise Exploratória (EDA)
+Antes do treino, gere os relatórios visuais para avaliar o balanceamento das classes e validar o pré-processamento. Os arquivos serão salvos em `output/figures/` no formato PDF de alta resolução para inclusão em publicações científicas.
+
+```bash
+poetry run python src/data/exploratory_analysis.py
+```
+**Gráficos Gerados:**
+* `class_distribution_bars.pdf`: Frequência por classe em cada partição (Train/Val/Test).
+* `class_distribution_pie.pdf`: Proporção geral das classes no dataset.
+* `split_density_violin.pdf`: Distribuição de densidade da quantidade de arquivos.
+* `hair_removal_demo.pdf`: Demonstrativo de 10 casos (Antes vs. Depois) da remoção de pelos.
+
+### Fase 3: Treinamento e Avaliação (Linear Probing)
 Este orquestrador inicializa os modelos (SigLIP e variações do CLIP), aplica a remoção de pelos apenas para as imagens clínicas (Hanseníase) e executa o *Linear Probing*. O melhor modelo (com base no *validation loss*) é salvo e avaliado contra o conjunto de teste.
 
 ```bash
 poetry run python src/run_experiment.py
 ```
-
-Os resultados finais (Acurácia, Precision, Recall e F1-Score Macro) serão gerados e exibidos diretamente no terminal para a compilação do artigo.
 
 ---
 
@@ -119,26 +131,6 @@ Para garantir uma comparação justa e baixo custo computacional, adotamos o seg
 2. **Feature Extraction:** O modelo extrai um vetor (pooled output) que representa as características patológicas da imagem.
 3. **Linear Head:** Uma camada linear customizada é treinada para mapear essas características para as classes de Doenças Tropicais Negligenciadas (DTNs).
 
-### Referências (VLM)
-```bibtex
-@misc{radford2021learning,
-  title={Learning Transferable Visual Models From Natural Language Supervision}, 
-  author={Alec Radford and Jong Wook Kim and Chris Hallacy and others},
-  year={2021},
-  eprint={2103.00020},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV}
-}
-
-@misc{zhai2023sigmoid,
-  title={Sigmoid Loss for Language-Image Pre-training}, 
-  author={Xiaohua Zhai and Basil Mustafa and Alexander Kolesnikov and Lucas Beyer},
-  year={2023},
-  eprint={2303.15343},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV}
-}
-```
 ---
 
 ## 📝 Citação e Licença
@@ -156,16 +148,16 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICE
 * [LinkedIn Profile](https://www.linkedin.com/in/mariodearaujocarvalho/)
 
 
-## 📚 Referências (Datasets)
+## 📚 Referências
 
-Se for utilizar as imagens compiladas por este framework, certifique-se de referenciar adequadamente os criadores originais dos datasets:
+### Datasets
 ```bibtex
 @misc{orvile_leprosy_2023,
   author = {Orvile},
   title = {Leprosy Chronic Wound Images (CO2Wounds-V2)},
   year = {2023},
   publisher = {Kaggle},
-  howpublished = {\url{[https://www.kaggle.com/datasets/orvile/leprosy-chronic-wound-images-co2wounds-v2](https://www.kaggle.com/datasets/orvile/leprosy-chronic-wound-images-co2wounds-v2)}},
+  howpublished = {\url{https://www.kaggle.com/datasets/orvile/leprosy-chronic-wound-images-co2wounds-v2}},
   note = {Acessado em: 2024}
 }
 
@@ -174,7 +166,7 @@ Se for utilizar as imagens compiladas por este framework, certifique-se de refer
   title = {Parasite Dataset (Leishmania, Plasmodium, Trypanosome, etc.)},
   year = {2022},
   publisher = {Kaggle},
-  howpublished = {\url{[https://www.kaggle.com/datasets/ahmedxc4/parasite-dataset](https://www.kaggle.com/datasets/ahmedxc4/parasite-dataset)}},
+  howpublished = {\url{https://www.kaggle.com/datasets/ahmedxc4/parasite-dataset}},
   note = {Acessado em: 2024}
 }
 
@@ -183,7 +175,7 @@ Se for utilizar as imagens compiladas por este framework, certifique-se de refer
   title = {Trypanosoma cruzi Microscopy Detection Dataset},
   year = {2021},
   publisher = {Kaggle},
-  howpublished = {\url{[https://www.kaggle.com/datasets/andrpereira157/trypanosoma-cruzi-microscopy-detection-dataset](https://www.kaggle.com/datasets/andrpereira157/trypanosoma-cruzi-microscopy-detection-dataset)}},
+  howpublished = {\url{https://www.kaggle.com/datasets/andrpereira157/trypanosoma-cruzi-microscopy-detection-dataset}},
   note = {Acessado em: 2024}
 }
 
@@ -192,7 +184,28 @@ Se for utilizar as imagens compiladas por este framework, certifique-se de refer
   title = {Kato-Katz STH & S. mansoni Dataset},
   year = {2023},
   publisher = {Kaggle},
-  howpublished = {\url{[https://www.kaggle.com/datasets/mohaliy2016/ai4ntd-p1-5v2](https://www.kaggle.com/datasets/mohaliy2016/ai4ntd-p1-5v2)}},
+  howpublished = {\url{https://www.kaggle.com/datasets/mohaliy2016/ai4ntd-p1-5v2}},
   note = {Acessado em: 2024}
+}
+```
+
+### Vision-Language Models (VLM)
+```bibtex
+@misc{radford2021learning,
+  title={Learning Transferable Visual Models From Natural Language Supervision}, 
+  author={Alec Radford and Jong Wook Kim and Chris Hallacy and others},
+  year={2021},
+  eprint={2103.00020},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+}
+
+@misc{zhai2023sigmoid,
+  title={Sigmoid Loss for Language-Image Pre-training}, 
+  author={Xiaohua Zhai and Basil Mustafa and Alexander Kolesnikov and Lucas Beyer},
+  year={2023},
+  eprint={2303.15343},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
 }
 ```
