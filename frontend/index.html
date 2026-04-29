@@ -6,14 +6,12 @@
     <title>CADTN - Classificador Multimodal</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CSS Customizado (Fade Animations) -->
+    <link rel="stylesheet" href="./css/style.css">
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
@@ -198,103 +196,7 @@
 
     </div>
 
-    <script>
-        const { createApp } = Vue
-
-        createApp({
-            data() {
-                return {
-                    file: null,
-                    imagePreview: null,
-                    availableModels: [
-                        "microsoft/resnet-50",
-                        "google/efficientnet-b3",
-                        "google/vit-base-patch16-224",
-                        "openai/clip-vit-base-patch16",
-                        "google/siglip-base-patch16-224"
-                    ],
-                    selectedModel: "microsoft/resnet-50",
-                    isLoading: false,
-                    predictions: [],
-                    diseaseDatabase: [],
-                    showDiseaseModal: false,
-                    showAbout: false,
-                    selectedDiseaseInfo: null,
-                    apiUrl: "http://127.0.0.1:8000" // Altere se o FastAPI rodar em outra porta
-                }
-            },
-            mounted() {
-                // Carrega o banco de dados JSON de parasitas
-                fetch('./data/parasite.json')
-                    .then(response => response.json())
-                    .then(data => {
-                        this.diseaseDatabase = data;
-                        console.log("Banco de dados médico carregado:", this.diseaseDatabase.length, "doenças.");
-                    })
-                    .catch(error => console.error("Erro ao carregar parasite.json:", error));
-            },
-            methods: {
-                handleFileUpload(event) {
-                    const selectedFile = event.target.files[0];
-                    if (!selectedFile) return;
-                    
-                    this.file = selectedFile;
-                    this.predictions = []; // Limpa previsões antigas
-                    
-                    // Cria preview
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        this.imagePreview = e.target.result;
-                    };
-                    reader.readAsDataURL(selectedFile);
-                },
-                async submitAnalysis() {
-                    if (!this.file) return;
-
-                    this.isLoading = true;
-                    this.predictions = [];
-
-                    const formData = new FormData();
-                    formData.append("file", this.file);
-                    formData.append("model_name", this.selectedModel);
-
-                    try {
-                        const response = await fetch(`${this.apiUrl}/predict`, {
-                            method: "POST",
-                            body: formData
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`Erro HTTP: ${response.status}`);
-                        }
-
-                        const data = await response.json();
-                        this.predictions = data.predictions;
-                    } catch (error) {
-                        console.error("Erro na API:", error);
-                        alert("Erro ao conectar com o servidor. Verifique se o FastAPI está rodando.");
-                    } finally {
-                        this.isLoading = false;
-                    }
-                },
-                formatClassName(rawName) {
-                    // Transforma "microscopy_parasite_plasmodium" em "Plasmodium"
-                    let name = rawName.replace('microscopy_parasite_', '')
-                                      .replace('clinical_', '')
-                                      .replace('microscopy_', '');
-                    return name.charAt(0).toUpperCase() + name.slice(1);
-                },
-                getDiseaseInfo(classId) {
-                    return this.diseaseDatabase.find(d => d.id === classId);
-                },
-                openDiseaseModal(classId) {
-                    this.selectedDiseaseInfo = this.getDiseaseInfo(classId);
-                    if (this.selectedDiseaseInfo) {
-                        this.showDiseaseModal = true;
-                    }
-                }
-            }
-        }).mount('#app')
-    </script>
+    <!-- Script Customizado (Vue Logic) -->
+    <script src="./js/app.js"></script>
 </body>
 </html>
