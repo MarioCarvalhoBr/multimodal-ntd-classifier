@@ -31,6 +31,8 @@ numpy = "<2.0.0"
 pyyaml = "^6.0.3"
 sentencepiece = "^0.2.1"
 python-multipart = "^0.0.27"
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
 
 [[tool.poetry.source]]
 name = "pytorch_gpu"
