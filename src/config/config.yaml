@@ -1,0 +1,11 @@
+# Configuration for the model
+model:
+  name: "multimodal-ntd-classifier"
+  version: "1.0.0"
+  threshold: 0.85
+
+# Configurations for the API
+api:
+  title: "Multimodal NTD Classifier API"
+  version: "0.1.0"
+  description: "API for serving machine learning models."

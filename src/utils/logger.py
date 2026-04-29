@@ -5,7 +5,7 @@ from datetime import datetime
 def setup_logger():
     os.makedirs("logs", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = os.path.join("logs", f"{timestamp}_multimoda_ntd_classifier.log")
+    log_file = os.path.join("logs", f"{timestamp}_multimodal_ntd_classifier.log")
 
     logger = logging.getLogger("ntd_classifier")
     logger.setLevel(logging.INFO)

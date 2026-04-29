@@ -11,6 +11,9 @@ from models.classifier import ModelFactory
 from models.trainer import ModelTrainer as Trainer
 from features.preprocessors import HairRemovalFilter
 from utils.logger import logger
+from config.config import load_config
+
+settings = load_config()
 
 
 def main():
@@ -48,11 +51,10 @@ def main():
     # Certifique-se de que a lista de modelos bate com os que você treinou e salvou
     MODELS_TO_TEST = args.nets
     
-    ALLOWED_MODELS = [
-        "google/siglip-base-patch16-224",
-        "openai/clip-vit-base-patch16",
-        # Baselines Tradicionais de Visão
-        "efficientnet_b3",             # Via timm
+    ALLOWED_MODELS = settings.ALLOWED_MODELS
+    if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):
+        logger.info(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
+        return
         "vit_base_patch16_224"         # Via timm
     ]
     if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):

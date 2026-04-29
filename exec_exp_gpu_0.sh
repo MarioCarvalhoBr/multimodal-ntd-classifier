@@ -1,7 +1,7 @@
 source .venv/bin/activate
 CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES=0 poetry run python src/run_experiment.py \
   --classes clinical_leprosy microscopy_chagas \
-  --nets efficientnet_b3 \
+  --nets vit_base_patch16_224 \
   --epochs 10 \
   --batch_size 256 \
   --num_workers 0 \
