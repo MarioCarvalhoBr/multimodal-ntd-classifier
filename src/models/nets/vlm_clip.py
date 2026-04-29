@@ -9,7 +9,10 @@ class VLM_CLIP(BaseModel):
         super().__init__(num_classes, freeze_backbone)
         
         self.processor = CLIPProcessor.from_pretrained(self.__tag_name_huggingface__)
-        self.backbone = CLIPModel.from_pretrained(self.__tag_name_huggingface__)
+        self.backbone = CLIPModel.from_pretrained(
+            self.__tag_name_huggingface__,
+            use_safetensors=True
+        )
         self.freeze()
         
         # Cria a cabeça de classificação baseada na dimensão do CLIP

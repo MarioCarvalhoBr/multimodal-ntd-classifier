@@ -1,12 +1,12 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from tqdm import tqdm
 import os
 import matplotlib.pyplot as plt
 from pathlib import Path
+import json
+import pandas as pd
 
 from utils.logger import logger
 
@@ -26,6 +26,7 @@ class ModelTrainer:
         self.optimizer = torch.optim.Adam(trainable_params, lr=lr)
         
         self.history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
+        
 
     def save_curves(self, model_name):
         logger.info(f"[*] Salvando curvas de aprendizado para: {model_name}")
@@ -59,8 +60,6 @@ class ModelTrainer:
         plt.savefig(output_dir / "accuracy_curve.pdf")
         plt.close()
         
-        # Save JSON history
-        import json
         with open(output_dir / "history.json", "w") as f:
             json.dump(self.history, f, indent=4)
             
@@ -139,8 +138,13 @@ class ModelTrainer:
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 torch.save(self.model.state_dict(), save_path)
                 logger.info(f"[+] Melhor modelo salvo em: {save_path}")
-    def test_and_report(self, test_loader: DataLoader, target_names: list):
+    def test_and_report(self, test_loader: DataLoader, target_names: list, model_name: str):
         """Gera o relatório final de classificação formatado para artigos em uma única passagem."""
+        
+        model_tag = model_name.replace("/", "_")
+        output_dir = Path(f"output/results/{model_tag}")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
         logger.info("\n[*] Avaliando o conjunto de Teste...")
         self.model.eval()
         
@@ -177,3 +181,27 @@ class ModelTrainer:
         logger.info("="*50)
         logger.info(f"Loss: {test_loss:.4f} | Acurácia: {test_acc:.4f} | F1-Macro: {test_f1:.4f}\n")
         logger.info(classification_report(all_labels, all_preds, target_names=target_names))
+        
+        report_dir = Path(f"{output_dir}/test_report")
+        report_dir.mkdir(parents=True, exist_ok=True)
+        with open(report_dir / "test_report.txt", "w") as f:
+            f.write("MÉTRICAS FINAIS PARA O ARTIGO (TEST SET)\n")
+            f.write("="*50 + "\n")
+            f.write(f"Loss: {test_loss:.4f} | Acurácia: {test_acc:.4f} | F1-Macro: {test_f1:.4f}\n\n")
+            f.write(classification_report(all_labels, all_preds, target_names=target_names))
+        
+        with open(report_dir / "test_report.json", "w") as f:
+            json.dump({
+                "loss": test_loss,
+                "accuracy": test_acc,
+                "f1_macro": test_f1,
+                "classification_report": classification_report(all_labels, all_preds, target_names=target_names, output_dict=True)
+            }, f, indent=4)
+        logger.info(f"[+] Relatório de teste salvo em: {report_dir / 'test_report.txt'} e {report_dir / 'test_report.json'}")
+        
+        pred_df = pd.DataFrame({
+            "true_label": all_labels,
+            "pred_label": all_preds
+        })
+        pred_df.to_csv(report_dir / "test_predictions.csv", index=False)
+        logger.info(f"[+] Predições de teste salvas em: {report_dir / 'test_predictions.csv'}")

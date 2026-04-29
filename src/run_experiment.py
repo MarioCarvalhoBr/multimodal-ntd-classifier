@@ -109,8 +109,8 @@ def main():
         output_dir_log = Path(f"output/results/{model_tag}")
         output_dir_log.mkdir(parents=True, exist_ok=True)
         if log_file:
-            shutil.copy2(log_file, output_dir_log / "log.log")
-            logger.info(f"[+] Log copiado para: {output_dir_log / 'log.log'}")
+            shutil.copy2(log_file, output_dir_log / "log-train.log")
+            logger.info(f"[+] Log copiado para: {output_dir_log / 'log-train.log'}")
 
 if __name__ == "__main__":
     try: 

@@ -5,11 +5,13 @@ import torch.multiprocessing as mp
 from pathlib import Path
 from torch.utils.data import DataLoader
 
+import shutil
+
 from data.dataset import NTDDataset
-from models.factory import ModelFactory      # <-- Atualizado: Importando do novo factory
+from models.factory import ModelFactory
 from models.trainer import ModelTrainer as Trainer
 from features.preprocessors import HairRemovalFilter
-from utils.logger import logger
+from utils.logger import logger, log_file
 from config.config import load_config
 
 settings = load_config()
@@ -94,8 +96,14 @@ def main():
 
         # 7. Executar Teste e Reportar
         trainer = Trainer(model, device=str(device))
-        trainer.test_and_report(test_loader, target_names=args.classes)
+        trainer.test_and_report(test_loader, target_names=args.classes, model_name=model_name)
         logger.info(f"[*] Avaliação de teste concluída para: {model_name}")
+        
+        output_dir_log = Path(f"output/results/{model_tag}")
+        output_dir_log.mkdir(parents=True, exist_ok=True)
+        if log_file:
+            shutil.copy2(log_file, output_dir_log / "log-test.log")
+            logger.info(f"[+] Log copiado para: {output_dir_log / 'log-test.log'}")
 
 if __name__ == "__main__":
     mp.set_start_method('spawn', force=True)
