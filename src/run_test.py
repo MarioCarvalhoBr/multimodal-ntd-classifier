@@ -22,9 +22,12 @@ def main():
 
     # 2. Hardware e Contexto
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         # torch.cuda.init()
+        
+    print(f"✅ Dispositivo selecionado: {device}")
 
     # 3. Verificação de Dados
     data_dir = Path("dataset/processed/Dataset-NTD-V1")
@@ -95,6 +98,7 @@ def main():
         
         # Chama a função que já criamos no trainer.py para imprimir o Classification Report
         trainer.test_and_report(test_loader, target_names=args.classes)
+        print(f"[*] Avaliação de teste concluída para: {model_name}")
 
 if __name__ == "__main__":
     mp.set_start_method('spawn', force=True)

@@ -22,6 +22,7 @@ class ModelTrainer:
         self.history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
 
     def save_curves(self, model_name):
+        print(f"[*] Salvando curvas de aprendizado para: {model_name}")
         output_dir = Path("output/figures")
         output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -51,6 +52,7 @@ class ModelTrainer:
         plt.tight_layout()
         plt.savefig(output_dir / f"learning_curves_{model_tag}.pdf")
         plt.close()
+        print(f"[+] Curvas salvas em: {output_dir / f'learning_curves_{model_tag}.pdf'}")
     def _run_epoch(self, dataloader: DataLoader, is_train: bool = True):
         """Método interno para rodar uma época (Treino ou Validação)."""
         if is_train:
