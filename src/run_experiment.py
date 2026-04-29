@@ -1,6 +1,7 @@
 import os
 import sys
 
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
 # Adiciona a pasta 'src' ao path do Python para ele encontrar os módulos locais
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -20,11 +21,13 @@ def main():
     print(f'Cuda disponível: {torch.cuda.is_available()}')
     print(f'Quantidade de GPUs: {torch.cuda.device_count()}')
     print(f'GPU atual: {torch.cuda.get_device_name(0)}')
-    batch_size = 128
+    batch_size = 512
+    num_workers = 4
     epochs = 10
     
     print(f"[*] Diretório de dados: {data_dir}")
     print(f"[*] Batch size: {batch_size}")
+    print(f"[*] Número de workers: {num_workers}")
     print(f"[*] Épocas: {epochs}")
     
     # Modelos que você listou para comparar
@@ -49,8 +52,15 @@ def main():
         model, processor = ModelFactory.create(
             model_name=model_name, 
             num_classes=4, # Leprosy, Chagas, Parasites_Gen, Schistosomiasis
-            freeze_backbone=True # Linear Probing
+            # freeze_backbone=True # Linear Probing
         )
+        
+        # 3. IMPLEMENTAÇÃO MULTI-GPU (DataParallel)
+        if torch.cuda.device_count() > 1:
+            pass
+            # print(f"[*] Detectadas {torch.cuda.device_count()} GPUs. Ativando paralelismo...")
+            # O DataParallel divide o batch_size entre as GPUs automaticamente
+            # model = torch.nn.DataParallel(model)
 
         model.to(device)
 
@@ -63,9 +73,16 @@ def main():
         class_names = train_dataset.classes
 
         # DataLoaders
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+        train_loader = DataLoader(
+            train_dataset, 
+            batch_size=batch_size, 
+            num_workers=num_workers, 
+            pin_memory=True, 
+            shuffle=True
+        )
+        
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
         # Configurando o Treinador
         trainer = ModelTrainer(model=model, device=device, learning_rate=1e-3)
