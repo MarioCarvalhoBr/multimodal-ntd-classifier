@@ -99,11 +99,46 @@ Os resultados finais (Acurácia, Precision, Recall e F1-Score Macro) serão gera
 
 ---
 
-## 📊 Modelos Avaliados
-* `openai/clip-vit-base-patch32` (Prototipagem rápida, leve e estável)
-* `openai/clip-vit-base-patch16` (Maior resolução visual)
-* `google/siglip-base-patch16-224` (SOTA em compreensão semântico-visual)
+## 🤖 Métodos: Vision-Language Models (VLM)
 
+Esta pesquisa utiliza a técnica de **Linear Probing** sobre modelos multimodais pré-treinados. Diferente das CNNs tradicionais, os VLMs alinham espaços vetoriais de visão e linguagem, permitindo uma generalização superior em domínios médicos com poucos dados rotulados.
+
+### Arquiteturas Avaliadas
+
+| Modelo (Hugging Face) | Dimensão | Vantagens Metodológicas |
+| :--- | :---: | :--- |
+| `google/siglip-base-patch16-224` | 768 | Utiliza a loss *Sigmoid* para aprendizado imagem-texto, apresentando o estado da arte em eficiência e compreensão semântica. |
+| `openai/clip-vit-base-patch32` | 512 | Alta eficiência computacional, ideal para dispositivos móveis em missões de triagem em campo (SUS). |
+| `openai/clip-vit-base-patch16` | 512 | Equilíbrio entre performance e detalhamento visual (patches de 16x16), capturando texturas finas em microscopia. |
+| `openai/clip-vit-large-patch14` | 768 | Máxima capacidade de extração de atributos globais e locais, servindo como teto de performance do experimento. |
+
+### Estratégia de Transfer Learning: Linear Probing
+
+Para garantir uma comparação justa e baixo custo computacional, adotamos o seguinte pipeline:
+1. **Backbone Freeze:** Os pesos dos Vision Transformers (ViT) dos modelos CLIP/SigLIP são congelados para preservar o conhecimento prévio.
+2. **Feature Extraction:** O modelo extrai um vetor (pooled output) que representa as características patológicas da imagem.
+3. **Linear Head:** Uma camada linear customizada é treinada para mapear essas características para as classes de Doenças Tropicais Negligenciadas (DTNs).
+
+### Referências (VLM)
+```bibtex
+@misc{radford2021learning,
+  title={Learning Transferable Visual Models From Natural Language Supervision}, 
+  author={Alec Radford and Jong Wook Kim and Chris Hallacy and others},
+  year={2021},
+  eprint={2103.00020},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+}
+
+@misc{zhai2023sigmoid,
+  title={Sigmoid Loss for Language-Image Pre-training}, 
+  author={Xiaohua Zhai and Basil Mustafa and Alexander Kolesnikov and Lucas Beyer},
+  year={2023},
+  eprint={2303.15343},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+}
+```
 ---
 
 ## 📝 Citação e Licença
