@@ -2,12 +2,6 @@ import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoImageProcessor
 import timm
-import os
-
-from dotenv import load_dotenv
-load_dotenv()
-print(f"LD_LIBRARY_PATH: {os.getenv('LD_LIBRARY_PATH')}")
-print(f"CUDA_LAUNCH_BLOCKING: {os.getenv('CUDA_LAUNCH_BLOCKING')}")
 
 # List todos os modelos disponíveis no timm para debug
 print("Modelos disponíveis no timm:")

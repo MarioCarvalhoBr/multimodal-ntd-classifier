@@ -1,5 +1,4 @@
 import argparse
-import os
 import torch
 import torch.multiprocessing as mp
 from pathlib import Path
