@@ -1,0 +1,17 @@
+✅ Multiprocessing configurado com 'spawn' para compatibilidade com CUDA.
+Configurações do Experimento:
+  classes: ['clinical_leprosy', 'microscopy_chagas']
+  nets: ['efficientnet_b3']
+  epochs: 1
+  batch_size: 16
+  num_workers: 0
+  use_single_gpu: True
+✅ CUDA disponível. Usando GPU: NVIDIA GeForce RTX 3080
+✅ GPU atual: 0 - NVIDIA GeForce RTX 3080
+✅ Treinando para 2 classes: ['clinical_leprosy', 'microscopy_chagas']
+
+############################################################
+[*] INICIANDO EXPERIMENTO: efficientnet_b3
+[*] Iniciando treinamento por 1 épocas no device: cuda
+
+Epoch 1/1

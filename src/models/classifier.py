@@ -3,6 +3,13 @@ import torch.nn as nn
 from transformers import AutoModel, AutoImageProcessor
 import timm
 
+# List todos os modelos disponíveis no timm para debug
+# print("Modelos disponíveis no timm:")
+for model_name in timm.list_models():
+    pass #print(f" - {model_name}")
+    
+# exit(0)
+
 class MultimodalLinearProbe(nn.Module):
     def __init__(self, model_name, num_classes, freeze_backbone=True):
         super().__init__()
