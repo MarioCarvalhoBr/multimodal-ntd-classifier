@@ -20,6 +20,7 @@ class HairRemovalFilter(ImagePreprocessor):
 
     def process(self, image: np.ndarray) -> np.ndarray:
         # 1. Convert to grayscale
+        return image
         gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         
         # 2. Apply Black-Hat filter to detect hair pixels

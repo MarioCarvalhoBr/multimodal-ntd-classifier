@@ -3,4 +3,3 @@ CUDA_VISIBLE_DEVICES=1 poetry run python src/run_test.py \
   --classes clinical_leprosy microscopy_chagas \
   --nets openai/clip-vit-base-patch16 \
   --num_workers 0
-  --use_single_gpu

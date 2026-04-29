@@ -35,6 +35,7 @@ class NTDDataset(Dataset):
         else:
             self.classes = sorted([d.name for d in self.root_dir.iterdir() if d.is_dir()])
             
+            
         self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
         self.images = []
         
