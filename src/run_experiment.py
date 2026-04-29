@@ -16,6 +16,11 @@ def main():
     # 1. Configurações gerais do experimento
     data_dir = os.getenv("PROCESSED_DATA_DIR", "dataset/processed/Dataset-NTD-V1")
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Usando device: {device}")
+    print(f'Cuda disponível: {torch.cuda.is_available()}')
+    print(f'Quantidade de GPUs: {torch.cuda.device_count()}')
+    print(f'GPU atual: {torch.cuda.get_device_name(0)}')
+    
     batch_size = 32
     epochs = 10
     
