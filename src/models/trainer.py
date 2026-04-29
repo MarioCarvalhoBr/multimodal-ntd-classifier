@@ -120,19 +120,37 @@ class ModelTrainer:
                 print(f"[+] Melhor modelo salvo em: {save_path}")
 
     def test_and_report(self, test_loader: DataLoader, target_names: list):
-        """Gera o relatório final de classificação formatado para artigos."""
+        """Gera o relatório final de classificação formatado para artigos em uma única passagem."""
         print("\n[*] Avaliando o conjunto de Teste...")
-        test_loss, test_acc, test_f1 = self._run_epoch(test_loader, is_train=False)
-        
-        # Coletar predições finais para o classification report detalhado
         self.model.eval()
-        all_preds, all_labels = [], []
+        
+        total_loss = 0.0
+        all_preds = []
+        all_labels = []
+
+        progress_bar = tqdm(test_loader, desc="Evaluating Test Set", leave=False)
+
         with torch.no_grad():
-            for pixel_values, labels in test_loader:
-                outputs = self.model(pixel_values.to(self.device))
+            for pixel_values, labels in progress_bar:
+                pixel_values = pixel_values.to(self.device)
+                labels = labels.to(self.device)
+
+                # Forward pass
+                outputs = self.model(pixel_values)
+                loss = self.criterion(outputs, labels)
+                total_loss += loss.item() * pixel_values.size(0)
+
+                # Predições
                 _, preds = torch.max(outputs, 1)
                 all_preds.extend(preds.cpu().numpy())
-                all_labels.extend(labels.numpy())
+                all_labels.extend(labels.cpu().numpy())
+                
+                progress_bar.set_postfix({"loss": f"{loss.item():.4f}"})
+
+        # Cálculos Finais
+        test_loss = total_loss / len(test_loader.dataset)
+        test_acc = accuracy_score(all_labels, all_preds)
+        test_f1 = f1_score(all_labels, all_preds, average='macro')
 
         print("\n" + "="*50)
         print("MÉTRICAS FINAIS PARA O ARTIGO (TEST SET)")

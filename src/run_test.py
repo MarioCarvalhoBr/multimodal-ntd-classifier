@@ -22,10 +22,11 @@ def main():
 
     # 2. Hardware e Contexto
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = "cpu"
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-        # torch.cuda.init()
+        print(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
+    else:
+        print("⚠️ CUDA não disponível. Usando CPU, o que pode ser muito lento para modelos grandes!")
         
     print(f"✅ Dispositivo selecionado: {device}")
 
@@ -76,15 +77,12 @@ def main():
         # Mover para a GPU
         model = model.to(device)
 
-        if not args.use_single_gpu and torch.cuda.device_count() > 1:
-            print("[*] Ativando DataParallel para inferência rápida")
-            model = torch.nn.DataParallel(model)
-
+    
         # 5. Preprocessor da Fase 1
         hair_preprocessor = HairRemovalFilter()
 
         # 6. Carregar Dataset de Teste
-        test_dataset = NTDDataset(test_dir, processor, args.classes, hair_preprocessor)
+        test_dataset = NTDDataset(test_dir, processor, None, hair_preprocessor)
         test_loader = DataLoader(
             test_dataset, 
             batch_size=args.batch_size, 

@@ -70,8 +70,8 @@ class NTDDataset(Dataset):
         # Pipeline Fase 1: Pré-processamento Baseado em Regras
         # Aplica a remoção de pelos apenas se o caminho indicar imagem clínica
         # -------------------------------------------------------------
-        if self.custom_preprocessor and "clinical" in img_path_str.lower():
-            image_cv = self.custom_preprocessor.process(image_cv)
+        #if self.custom_preprocessor and "clinical" in img_path_str.lower():
+        #    image_cv = self.custom_preprocessor.process(image_cv)
             
         # Converte de volta para PIL Image, formato nativo para os processors da HuggingFace
         image_pil = Image.fromarray(image_cv)
