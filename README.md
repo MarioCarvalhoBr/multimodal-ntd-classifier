@@ -28,7 +28,7 @@ A classificação é realizada através de **Linear Probing** sobre os *backbone
 O código foi construído seguindo os princípios **SOLID** e padrões de **Clean Code**.
 
 ```text
-cadtn_skin_lesion_poc/
+multimodal-ntd-classifier/
 ├── data/
 │   ├── raw/                 # Cache de download do Kaggle
 │   └── processed/           # Dataset unificado e estratificado (Train/Val/Test)

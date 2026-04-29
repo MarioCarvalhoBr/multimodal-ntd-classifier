@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "cadtn-skin-lesion-poc"
+name = "multimodal-ntd-classifier"
 version = "0.1.0"
 description = ""
 authors = ["Mário Carvalho <mariodearaujocarvalho@gmail.com>"]
