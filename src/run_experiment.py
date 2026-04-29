@@ -2,12 +2,13 @@ import argparse
 import torch
 import torch.multiprocessing as mp
 from pathlib import Path
+import shutil
 from torch.utils.data import DataLoader
 from data.dataset import NTDDataset
 from models.classifier import ModelFactory
 from models.trainer import ModelTrainer
 from features.preprocessors import HairRemovalFilter
-from utils.logger import logger
+from utils.logger import logger, log_file
 from config.config import load_config
 
 settings = load_config()
@@ -39,6 +40,9 @@ def main():
         # o algoritmo mais rápido, o que pode conflitar com o cuBLAS
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True  # Garante reprodutibilidade também
+        
+        # Desabilitar o cuDNN completamente para isolar se é um bug da biblioteca C++ da NVIDIA
+        torch.backends.cudnn.enabled = False
         
         logger.info(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
     
@@ -105,6 +109,13 @@ def main():
         
         trainer.fit(train_loader, val_loader, epochs=args.epochs, save_path=save_path)
         trainer.save_curves(model_name)
+
+        model_tag = model_name.replace("/", "_")
+        output_dir = Path(f"output/results/{model_tag}")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        if log_file:
+            shutil.copy2(log_file, output_dir / "log.log")
+            logger.info(f"[+] Log copiado para: {output_dir / 'log.log'}")
 if __name__ == "__main__":
     # Garante que o multiprocessing não corrompa o CUDA ao usar num_workers > 0
     try: 

@@ -27,6 +27,6 @@ def setup_logger():
         logger.addHandler(file_handler)
         logger.addHandler(console_handler)
 
-    return logger
+    return logger, log_file
 
-logger = setup_logger()
+logger, log_file = setup_logger()

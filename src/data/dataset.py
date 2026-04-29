@@ -10,7 +10,7 @@ from utils.logger import logger
 
 # Desativa o multithreading interno do OpenCV para evitar deadlocks com o DataLoader
 # Isso é essencial para usar num_workers > 0 sem travamentos (segmentation faults)
-cv2.setNumThreads(0)
+cv2.setNumThreads(1)
 os.environ["OMP_NUM_THREADS"] = "1"
 
 class NTDDataset(Dataset):
@@ -59,16 +59,15 @@ class NTDDataset(Dataset):
     def __getitem__(self, idx):
         img_path_obj, label = self.images[idx]
         
-        # Converte Path para string (exigência estrita do cv2.imread)
+        # Converte Path para string
         img_path_str = str(img_path_obj)
         
-        # Carregamento robusto via OpenCV
-        image_cv = cv2.imread(img_path_str)
-        if image_cv is None:
-            raise FileNotFoundError(f"Erro crítico: O OpenCV não conseguiu ler a imagem: {img_path_str}")
-            
-        # Converte de BGR (padrão OpenCV) para RGB (padrão PIL/Visão)
-        image_cv = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
+        # Carregamento 100% nativo com PIL para evitar problemas de multi-threading em C do OpenCV
+        # Lembre-se, o PIL usa Lazy Loading, precisamos converter explicitamente para RGB.
+        try:
+            image_pil = Image.open(img_path_str).convert("RGB")
+        except Exception as e:
+            raise FileNotFoundError(f"Erro crítico: O PIL não conseguiu ler a imagem: {img_path_str}. Erro: {e}")
         
         # -------------------------------------------------------------
         # Pipeline Fase 1: Pré-processamento Baseado em Regras
@@ -77,9 +76,6 @@ class NTDDataset(Dataset):
         #if self.custom_preprocessor and "clinical" in img_path_str.lower():
         #    image_cv = self.custom_preprocessor.process(image_cv)
             
-        # Converte de volta para PIL Image, formato nativo para os processors da HuggingFace
-        image_pil = Image.fromarray(image_cv)
-        
         # -------------------------------------------------------------
         # Pipeline Fase 2: Processamento Neural (HuggingFace)
         # Redimensionamento, CenterCrop, e Normalização (Z-Score)

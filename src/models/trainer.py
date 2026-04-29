@@ -21,41 +21,52 @@ class ModelTrainer:
         self.device = device
         self.criterion = torch.nn.CrossEntropyLoss()
         # Otimizador criado aqui garante que os parâmetros já estejam no device correto
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        
+        # Filtrar parâmetros com requires_grad = True.
+        # Parâmetros com requires_grad = False dentro do Adam podem causar falhas no PyTorch/timm.
+        trainable_params = [p for p in self.model.parameters() if p.requires_grad]
+        self.optimizer = torch.optim.Adam(trainable_params, lr=lr)
+        
         self.history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
 
     def save_curves(self, model_name):
         logger.info(f"[*] Salvando curvas de aprendizado para: {model_name}")
-        output_dir = Path("output/figures")
+        model_tag = model_name.replace("/", "_")
+        output_dir = Path(f"output/results/{model_tag}")
         output_dir.mkdir(parents=True, exist_ok=True)
         
         epochs = range(1, len(self.history["train_loss"]) + 1)
-        model_tag = model_name.replace("/", "_")
-        
-        plt.figure(figsize=(12, 5))
         
         # Plot Loss
-        plt.subplot(1, 2, 1)
+        plt.figure(figsize=(6, 5))
         plt.plot(epochs, self.history["train_loss"], 'b-', label='Treino')
         plt.plot(epochs, self.history["val_loss"], 'r-', label='Validação')
-        plt.title(f'Loss - {model_name}')
+        plt.title(f'Loss - {model_tag}')
         plt.xlabel('Épocas')
         plt.ylabel('Loss')
         plt.legend()
+        plt.tight_layout()
+        plt.savefig(output_dir / "loss_curve.pdf")
+        plt.close()
         
         # Plot Accuracy
-        plt.subplot(1, 2, 2)
+        plt.figure(figsize=(6, 5))
         plt.plot(epochs, self.history["train_acc"], 'b-', label='Treino')
         plt.plot(epochs, self.history["val_acc"], 'r-', label='Validação')
-        plt.title(f'Acurácia - {model_name}')
+        plt.title(f'Acurácia - {model_tag}')
         plt.xlabel('Épocas')
         plt.ylabel('Acurácia')
         plt.legend()
-        
         plt.tight_layout()
-        plt.savefig(output_dir / f"learning_curves_{model_tag}.pdf")
+        plt.savefig(output_dir / "accuracy_curve.pdf")
         plt.close()
-        logger.info(f"[+] Curvas salvas em: {output_dir / f'learning_curves_{model_tag}.pdf'}")
+        
+        # Save JSON history
+        import json
+        with open(output_dir / "history.json", "w") as f:
+            json.dump(self.history, f, indent=4)
+            
+        logger.info(f"[+] Métricas, histórico e gráficos salvos em: {output_dir}")
     def _run_epoch(self, dataloader: DataLoader, is_train: bool = True):
         """Método interno para rodar uma época (Treino ou Validação)."""
         if is_train:
