@@ -7,7 +7,8 @@ from torch.utils.data import DataLoader
 from data.dataset import NTDDataset
 from models.classifier import ModelFactory
 from models.trainer import ModelTrainer
-from features.preprocessors import HairRemovalFilter # Nome correto da classe importada
+from features.preprocessors import HairRemovalFilter
+
 
 def main():
     # 1. Configuração de Argumentos
@@ -29,8 +30,13 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-        # Inicializa o contexto CUDA forçadamente na thread principal
-        #torch.cuda.init()
+        
+        # Desabilita o benchmark automático do cuDNN
+        # Esse benchmark faz alocações extras de memória para encontrar
+        # o algoritmo mais rápido, o que pode conflitar com o cuBLAS
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True  # Garante reprodutibilidade também
+        
         print(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
     
     # Plotar o numero da GPU utilizada
@@ -67,7 +73,15 @@ def main():
         print(f"\n" + "#"*60)
         print(f"[*] INICIANDO EXPERIMENTO: {model_name}")
         
-        # Cria o modelo primeiro
+        # ← ADICIONE ISTO: limpa fragmentação de memória entre modelos
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()  # Aguarda operações pendentes terminarem
+            print(f"✅ Memória GPU limpa antes de iniciar o modelo '{model_name}'.")
+            mem_free = torch.cuda.mem_get_info()[0] / 1024**3
+            mem_total = torch.cuda.mem_get_info()[1] / 1024**3
+            print(f"GPU Memory: {mem_free:.1f}GB livre de {mem_total:.1f}GB total")
+        
         model, processor = ModelFactory.create(model_name, num_classes=len(args.classes))
         
         # Mova o modelo para a GPU ANTES de passar para o Trainer ou DataParallel
