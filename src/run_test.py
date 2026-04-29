@@ -24,7 +24,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-        torch.cuda.init()
+        # torch.cuda.init()
 
     # 3. Verificação de Dados
     data_dir = Path("dataset/processed/Dataset-NTD-V1")
