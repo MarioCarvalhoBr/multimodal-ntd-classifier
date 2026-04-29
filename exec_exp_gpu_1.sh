@@ -1,2 +1,2 @@
 source .venv/bin/activate
-CUDA_VISIBLE_DEVICES=1 poetry run python src/run_experiment.py --classes clinical_leprosy microscopy_chagas --nets openai/clip-vit-base-patch16 --epochs 2 --num_workers 4 --use_single_gpu
+CUDA_VISIBLE_DEVICES=1 poetry run python src/run_experiment.py --classes clinical_leprosy microscopy_chagas --batch_size 256 --nets openai/clip-vit-base-patch16 --epochs 10 --num_workers 4 --use_single_gpu

@@ -106,8 +106,17 @@ class ModelTrainer:
         for epoch in range(epochs):
             print(f"\nEpoch {epoch+1}/{epochs}")
             
+            # Executa o treino e a validação
             train_loss, train_acc, train_f1 = self._run_epoch(train_loader, is_train=True)
             val_loss, val_acc, val_f1 = self._run_epoch(val_loader, is_train=False)
+
+            # --> ADICIONE ESTAS LINHAS AQUI <--
+            # Salva as métricas no histórico para gerar os gráficos depois
+            self.history["train_loss"].append(train_loss)
+            self.history["val_loss"].append(val_loss)
+            self.history["train_acc"].append(train_acc)
+            self.history["val_acc"].append(val_acc)
+            # ----------------------------------
 
             print(f"Train | Loss: {train_loss:.4f} | Acc: {train_acc:.4f} | F1: {train_f1:.4f}")
             print(f"Val   | Loss: {val_loss:.4f} | Acc: {val_acc:.4f} | F1: {val_f1:.4f}")
@@ -118,7 +127,6 @@ class ModelTrainer:
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 torch.save(self.model.state_dict(), save_path)
                 print(f"[+] Melhor modelo salvo em: {save_path}")
-
     def test_and_report(self, test_loader: DataLoader, target_names: list):
         """Gera o relatório final de classificação formatado para artigos em uma única passagem."""
         print("\n[*] Avaliando o conjunto de Teste...")
