@@ -5,6 +5,8 @@ model/
 models/*
 local_data/*
 local_data/
+logs/*
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
