@@ -20,13 +20,12 @@ def main():
     print(f'Cuda disponível: {torch.cuda.is_available()}')
     print(f'Quantidade de GPUs: {torch.cuda.device_count()}')
     print(f'GPU atual: {torch.cuda.get_device_name(0)}')
-    
-    batch_size = 32
+    batch_size = 128
     epochs = 10
     
     # Modelos que você listou para comparar
     models_to_test = [
-        "openai/clip-vit-base-patch32",
+        # "openai/clip-vit-base-patch32",
         "openai/clip-vit-base-patch16",
         "google/siglip-base-patch16-224",
         # "openai/clip-vit-large-patch14" # (Descomente se tiver VRAM suficiente)
@@ -48,6 +47,8 @@ def main():
             num_classes=4, # Leprosy, Chagas, Parasites_Gen, Schistosomiasis
             freeze_backbone=True # Linear Probing
         )
+
+        model.to(device)
 
         # Criando os Datasets com o processador específico deste modelo
         train_dataset = NTDVisionDataset(f"{data_dir}/train", processor, preprocessor)
