@@ -64,6 +64,7 @@ class ModelTrainer:
             json.dump(self.history, f, indent=4)
             
         logger.info(f"[+] Métricas, histórico e gráficos salvos em: {output_dir}")
+    
     def _run_epoch(self, dataloader: DataLoader, is_train: bool = True):
         """Método interno para rodar uma época (Treino ou Validação)."""
         if is_train:
@@ -78,9 +79,10 @@ class ModelTrainer:
         # Barra de progresso
         progress_bar = tqdm(dataloader, desc="Training" if is_train else "Evaluating", leave=False)
 
-        for pixel_values, labels in progress_bar:
-            pixel_values = pixel_values.to(self.device)
-            labels = labels.to(self.device)
+        for batch in progress_bar:
+            # Desempacota dinamicamente para evitar erros se o dataset retornar o caminho
+            pixel_values = batch[0].to(self.device)
+            labels = batch[1].to(self.device)
 
             # Forward pass com cálculo de gradiente apenas se for treino
             with torch.set_grad_enabled(is_train):
@@ -139,7 +141,7 @@ class ModelTrainer:
                 torch.save(self.model.state_dict(), save_path)
                 logger.info(f"[+] Melhor modelo salvo em: {save_path}")
     def test_and_report(self, test_loader: DataLoader, target_names: list, model_name: str):
-        """Gera o relatório final de classificação formatado para artigos em uma única passagem."""
+        """Gera o relatório final de classificação e exporta as predições detalhadas."""
         
         model_tag = model_name.replace("/", "_")
         output_dir = Path(f"output/results/{model_tag}")
@@ -151,13 +153,20 @@ class ModelTrainer:
         total_loss = 0.0
         all_preds = []
         all_labels = []
+        all_paths = [] # Nova lista para guardar os caminhos
 
         progress_bar = tqdm(test_loader, desc="Evaluating Test Set", leave=False)
 
         with torch.no_grad():
-            for pixel_values, labels in progress_bar:
-                pixel_values = pixel_values.to(self.device)
-                labels = labels.to(self.device)
+            for batch in progress_bar:
+                pixel_values = batch[0].to(self.device)
+                labels = batch[1].to(self.device)
+                
+                # Se o Dataset foi atualizado para retornar o caminho, nós o capturamos
+                if len(batch) > 2:
+                    all_paths.extend(batch[2])
+                else:
+                    all_paths.extend(["Caminho indisponível"] * pixel_values.size(0))
 
                 # Forward pass
                 outputs = self.model(pixel_values)
@@ -184,6 +193,8 @@ class ModelTrainer:
         
         report_dir = Path(f"{output_dir}/test_report")
         report_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Salvando txt e json
         with open(report_dir / "test_report.txt", "w") as f:
             f.write("MÉTRICAS FINAIS PARA O ARTIGO (TEST SET)\n")
             f.write("="*50 + "\n")
@@ -197,11 +208,23 @@ class ModelTrainer:
                 "f1_macro": test_f1,
                 "classification_report": classification_report(all_labels, all_preds, target_names=target_names, output_dict=True)
             }, f, indent=4)
-        logger.info(f"[+] Relatório de teste salvo em: {report_dir / 'test_report.txt'} e {report_dir / 'test_report.json'}")
+        logger.info(f"[+] Relatório de teste salvo em: {report_dir / 'test_report.txt'} e .json")
         
+        # ---------------------------------------------------------
+        # NOVO: Construção do DataFrame rico em detalhes
+        # ---------------------------------------------------------
+        true_class_names = [target_names[idx] for idx in all_labels]
+        pred_class_names = [target_names[idx] for idx in all_preds]
+        is_correct = [true == pred for true, pred in zip(all_labels, all_preds)]
+
         pred_df = pd.DataFrame({
-            "true_label": all_labels,
-            "pred_label": all_preds
+            "image_path": all_paths,
+            "true_label_id": all_labels,
+            "pred_label_id": all_preds,
+            "true_class": true_class_names,
+            "pred_class": pred_class_names,
+            "is_correct": is_correct
         })
+        
         pred_df.to_csv(report_dir / "test_predictions.csv", index=False)
-        logger.info(f"[+] Predições de teste salvas em: {report_dir / 'test_predictions.csv'}")
+        logger.info(f"[+] Predições detalhadas de teste salvas em: {report_dir / 'test_predictions.csv'}")

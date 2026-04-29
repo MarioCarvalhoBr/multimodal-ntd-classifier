@@ -55,12 +55,13 @@ class NTDDataset(Dataset):
 
     def __len__(self):
         return len(self.images)
-
+    
     def __getitem__(self, idx):
         img_path_obj, label = self.images[idx]
         
         # Converte Path para string
         img_path_str = str(img_path_obj)
+
         
         # Carregamento 100% nativo com PIL para evitar problemas de multi-threading em C do OpenCV
         # Lembre-se, o PIL usa Lazy Loading, precisamos converter explicitamente para RGB.
@@ -86,4 +87,4 @@ class NTDDataset(Dataset):
         # O squeeze(0) remove a dimensão de batch extra para o DataLoader
         pixel_values = encoding['pixel_values'].squeeze(0)
         
-        return pixel_values, torch.tensor(label, dtype=torch.long)
+        return pixel_values, torch.tensor(label, dtype=torch.long), img_path_str

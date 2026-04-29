@@ -1,3 +1,8 @@
+import sys
+from pathlib import Path
+# Força o Python a enxergar a pasta 'src' (um nível acima da pasta 'data')
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import os
 import pandas as pd
 import seaborn as sns
@@ -5,13 +10,8 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import cv2
 import numpy as np
-import sys
 
 from utils.logger import logger
-
-
-# Adiciona a pasta 'src' ao path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from features.preprocessors import HairRemovalFilter
 
 def generate_eda_reports():
