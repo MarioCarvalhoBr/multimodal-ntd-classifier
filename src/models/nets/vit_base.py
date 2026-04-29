@@ -12,7 +12,8 @@ class ViT_BasePatch16_224(BaseModel):
         self.backbone = ViTForImageClassification.from_pretrained(
             self.__tag_name_huggingface__,
             num_labels=num_classes,
-            ignore_mismatched_sizes=True
+            ignore_mismatched_sizes=True,
+            use_safetensors=True
         )
         self.freeze()
 

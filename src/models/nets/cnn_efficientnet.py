@@ -12,7 +12,8 @@ class CNN_EfficientNetB3(BaseModel):
         self.backbone = EfficientNetForImageClassification.from_pretrained(
             self.__tag_name_huggingface__,
             num_labels=num_classes,
-            ignore_mismatched_sizes=True
+            ignore_mismatched_sizes=True,
+            use_safetensors=True
         )
         self.freeze()
 

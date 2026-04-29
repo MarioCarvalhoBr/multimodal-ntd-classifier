@@ -1,10 +1,13 @@
 source .venv/bin/activate
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export CUDA_LAUNCH_BLOCKING=1
- CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES=0 poetry run python src/run_experiment.py \
+
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True CUDA_LAUNCH_BLOCKING=1 CUDA_VISIBLE_DEVICES=0 poetry run python src/run_experiment.py \
   --classes clinical_leprosy microscopy_chagas \
-  --nets microsoft/resnet-50 \
+  --nets google/vit-base-patch16-224 \
   --epochs 1 \
   --batch_size 16 \
   --num_workers 0 \
   --use_single_gpu
+
+echo "Experiment finished"
