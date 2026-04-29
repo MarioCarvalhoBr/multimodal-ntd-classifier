@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from typing import List, Dict
 
+from utils.logger import logger
+
+
 # Carrega as variáveis do .env
 load_dotenv()
 
@@ -14,9 +17,9 @@ class KaggleDownloader:
     
     @staticmethod
     def download(dataset_handle: str) -> Path:
-        print(f"[*] Baixando dataset: {dataset_handle}...")
+        logger.info(f"[*] Baixando dataset: {dataset_handle}...")
         path = kagglehub.dataset_download(dataset_handle)
-        print(f"[+] Download concluído. Salvo em: {path}")
+        logger.info(f"[+] Download concluído. Salvo em: {path}")
         return Path(path)
 
 class NTDDatasetBuilder:
@@ -38,7 +41,7 @@ class NTDDatasetBuilder:
         Nota: Devido à heterogeneidade dos datasets do Kaggle, essa função assume 
         que vamos extrair todas as imagens de um diretório fonte e rotulá-las.
         """
-        print(f"[*] Processando classe '{target_class}' a partir de {source_path}")
+        logger.info(f"[*] Processando classe '{target_class}' a partir de {source_path}")
         
         # Coleta todas as imagens de forma recursiva
         images = []
@@ -47,7 +50,7 @@ class NTDDatasetBuilder:
             images.extend(list(source_path.rglob(f"*{ext.upper()}")))
             
         if not images:
-            print(f"[!] Aviso: Nenhuma imagem encontrada para a classe {target_class}.")
+            logger.info(f"[!] Aviso: Nenhuma imagem encontrada para a classe {target_class}.")
             return
 
         # Stratified Split 70/15/15 (usando placeholder para os labels)
@@ -75,7 +78,7 @@ class NTDDatasetBuilder:
                     dest = dest.with_name(f"{img_path.stem}_{os.urandom(4).hex()}{img_path.suffix}")
                 shutil.copy2(img_path, dest)
                 
-        print(f"[+] {len(X_train)} Train | {len(X_val)} Val | {len(X_test)} Test imagens alocadas.")
+        logger.info(f"[+] {len(X_train)} Train | {len(X_val)} Val | {len(X_test)} Test imagens alocadas.")
 
 def main():
     # 1. Configurações
@@ -100,7 +103,7 @@ def main():
         # Processamento e Split
         builder.build_splits(source_path=raw_path, target_class=target_class)
 
-    print(f"\n[🚀] Dataset-NTD-V1 construído com sucesso em: {target_dir}")
+    logger.info(f"\n[🚀] Dataset-NTD-V1 construído com sucesso em: {target_dir}")
 
 if __name__ == "__main__":
     main()

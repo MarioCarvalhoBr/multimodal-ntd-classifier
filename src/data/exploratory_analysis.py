@@ -7,6 +7,9 @@ import cv2
 import numpy as np
 import sys
 
+from utils.logger import logger
+
+
 # Adiciona a pasta 'src' ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from features.preprocessors import HairRemovalFilter
@@ -77,7 +80,7 @@ def generate_eda_reports():
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.savefig(output_dir / "hair_removal_demo.pdf")
 
-    print(f"[+] Gráficos gerados com sucesso em: {output_dir}")
+    logger.info(f"[+] Gráficos gerados com sucesso em: {output_dir}")
 
 if __name__ == "__main__":
     generate_eda_reports()

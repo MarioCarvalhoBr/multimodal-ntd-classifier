@@ -7,6 +7,8 @@ from data.dataset import NTDDataset
 from models.classifier import ModelFactory
 from models.trainer import ModelTrainer
 from features.preprocessors import HairRemovalFilter
+from utils.logger import logger
+
 
 
 def main():
@@ -21,9 +23,9 @@ def main():
     args = parser.parse_args()
     
     # Print all arguments for clarity
-    print("Configurações do Experimento:")
+    logger.info("Configurações do Experimento:")
     for arg, value in vars(args).items():
-        print(f"  {arg}: {value}")
+        logger.info(f"  {arg}: {value}")
 
     # 2. Configuração de Hardware e Contexto
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -36,12 +38,12 @@ def main():
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True  # Garante reprodutibilidade também
         
-        print(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
+        logger.info(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
     
     # Plotar o numero da GPU utilizada
     if torch.cuda.is_available():
         gpu_id = torch.cuda.current_device()
-        print(f"✅ GPU atual: {gpu_id} - {torch.cuda.get_device_name(gpu_id)}")
+        logger.info(f"✅ GPU atual: {gpu_id} - {torch.cuda.get_device_name(gpu_id)}")
         
     # 3. Verificação de Segurança das Classes
     data_dir = Path("dataset/processed/Dataset-NTD-V1")
@@ -50,10 +52,10 @@ def main():
     available_classes = [d.name for d in train_dir.iterdir() if d.is_dir()]
     for cls in args.classes:
         if cls not in available_classes:
-            print(f"❌ ERRO: A classe '{cls}' não foi encontrada.")
+            logger.info(f"❌ ERRO: A classe '{cls}' não foi encontrada.")
             return
 
-    print(f"✅ Treinando para {len(args.classes)} classes: {args.classes}")
+    logger.info(f"✅ Treinando para {len(args.classes)} classes: {args.classes}")
 
     MODELS_TO_TEST = args.nets
     
@@ -65,21 +67,21 @@ def main():
         "vit_base_patch16_224"         # Via timm
     ]
     if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):
-        print(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
+        logger.info(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
         return
 
     for model_name in MODELS_TO_TEST:
-        print(f"\n" + "#"*60)
-        print(f"[*] INICIANDO EXPERIMENTO: {model_name}")
+        logger.info(f"\n" + "#"*60)
+        logger.info(f"[*] INICIANDO EXPERIMENTO: {model_name}")
         
         # ← ADICIONE ISTO: limpa fragmentação de memória entre modelos
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             torch.cuda.synchronize()  # Aguarda operações pendentes terminarem
-            print(f"✅ Memória GPU limpa antes de iniciar o modelo '{model_name}'.")
+            logger.info(f"✅ Memória GPU limpa antes de iniciar o modelo '{model_name}'.")
             mem_free = torch.cuda.mem_get_info()[0] / 1024**3
             mem_total = torch.cuda.mem_get_info()[1] / 1024**3
-            print(f"GPU Memory: {mem_free:.1f}GB livre de {mem_total:.1f}GB total")
+            logger.info(f"GPU Memory: {mem_free:.1f}GB livre de {mem_total:.1f}GB total")
         
         model, processor = ModelFactory.create(model_name, num_classes=len(args.classes))
         
@@ -87,7 +89,7 @@ def main():
         model = model.to(device)
 
         if not args.use_single_gpu and torch.cuda.device_count() > 1:
-            print("[*] Ativando DataParallel (Multi-GPU)")
+            logger.info("[*] Ativando DataParallel (Multi-GPU)")
             model = torch.nn.DataParallel(model)
 
         # Preprocessor da Fase 1
@@ -111,8 +113,8 @@ if __name__ == "__main__":
     # Garante que o multiprocessing não corrompa o CUDA ao usar num_workers > 0
     try: 
         mp.set_start_method('spawn', force=True)
-        print("✅ Multiprocessing configurado com 'spawn' para compatibilidade com CUDA.")
+        logger.info("✅ Multiprocessing configurado com 'spawn' para compatibilidade com CUDA.")
     except RuntimeError as e:
-        print(f"❌ ERRO: {e}")
+        logger.info(f"❌ ERRO: {e}")
     main()
     

@@ -8,6 +8,9 @@ import os
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+from utils.logger import logger
+
+
 class ModelTrainer:
     """
     Orquestra o ciclo de vida de treinamento, validação e teste.
@@ -22,7 +25,7 @@ class ModelTrainer:
         self.history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
 
     def save_curves(self, model_name):
-        print(f"[*] Salvando curvas de aprendizado para: {model_name}")
+        logger.info(f"[*] Salvando curvas de aprendizado para: {model_name}")
         output_dir = Path("output/figures")
         output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -52,7 +55,7 @@ class ModelTrainer:
         plt.tight_layout()
         plt.savefig(output_dir / f"learning_curves_{model_tag}.pdf")
         plt.close()
-        print(f"[+] Curvas salvas em: {output_dir / f'learning_curves_{model_tag}.pdf'}")
+        logger.info(f"[+] Curvas salvas em: {output_dir / f'learning_curves_{model_tag}.pdf'}")
     def _run_epoch(self, dataloader: DataLoader, is_train: bool = True):
         """Método interno para rodar uma época (Treino ou Validação)."""
         if is_train:
@@ -101,10 +104,10 @@ class ModelTrainer:
         """Loop principal de treinamento com salvamento do melhor modelo."""
         best_val_loss = float('inf')
         
-        print(f"[*] Iniciando treinamento por {epochs} épocas no device: {self.device}")
+        logger.info(f"[*] Iniciando treinamento por {epochs} épocas no device: {self.device}")
 
         for epoch in range(epochs):
-            print(f"\nEpoch {epoch+1}/{epochs}")
+            logger.info(f"\nEpoch {epoch+1}/{epochs}")
             
             # Executa o treino e a validação
             train_loss, train_acc, train_f1 = self._run_epoch(train_loader, is_train=True)
@@ -118,18 +121,18 @@ class ModelTrainer:
             self.history["val_acc"].append(val_acc)
             # ----------------------------------
 
-            print(f"Train | Loss: {train_loss:.4f} | Acc: {train_acc:.4f} | F1: {train_f1:.4f}")
-            print(f"Val   | Loss: {val_loss:.4f} | Acc: {val_acc:.4f} | F1: {val_f1:.4f}")
+            logger.info(f"Train | Loss: {train_loss:.4f} | Acc: {train_acc:.4f} | F1: {train_f1:.4f}")
+            logger.info(f"Val   | Loss: {val_loss:.4f} | Acc: {val_acc:.4f} | F1: {val_f1:.4f}")
 
             # Salva o modelo se a loss de validação melhorar
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 torch.save(self.model.state_dict(), save_path)
-                print(f"[+] Melhor modelo salvo em: {save_path}")
+                logger.info(f"[+] Melhor modelo salvo em: {save_path}")
     def test_and_report(self, test_loader: DataLoader, target_names: list):
         """Gera o relatório final de classificação formatado para artigos em uma única passagem."""
-        print("\n[*] Avaliando o conjunto de Teste...")
+        logger.info("\n[*] Avaliando o conjunto de Teste...")
         self.model.eval()
         
         total_loss = 0.0
@@ -160,8 +163,8 @@ class ModelTrainer:
         test_acc = accuracy_score(all_labels, all_preds)
         test_f1 = f1_score(all_labels, all_preds, average='macro')
 
-        print("\n" + "="*50)
-        print("MÉTRICAS FINAIS PARA O ARTIGO (TEST SET)")
-        print("="*50)
-        print(f"Loss: {test_loss:.4f} | Acurácia: {test_acc:.4f} | F1-Macro: {test_f1:.4f}\n")
-        print(classification_report(all_labels, all_preds, target_names=target_names))
+        logger.info("\n" + "="*50)
+        logger.info("MÉTRICAS FINAIS PARA O ARTIGO (TEST SET)")
+        logger.info("="*50)
+        logger.info(f"Loss: {test_loss:.4f} | Acurácia: {test_acc:.4f} | F1-Macro: {test_f1:.4f}\n")
+        logger.info(classification_report(all_labels, all_preds, target_names=target_names))

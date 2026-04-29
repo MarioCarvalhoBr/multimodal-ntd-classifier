@@ -1,12 +1,16 @@
+
 import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoImageProcessor
 import timm
 
+from utils.logger import logger
+
+
 # List todos os modelos disponíveis no timm para debug
-print("Modelos disponíveis no timm:")
+logger.info("Modelos disponíveis no timm:")
 for model_name in timm.list_models():
-    pass # print(f" - {model_name}")
+    pass # logger.info(f" - {model_name}")
     
 # exit(0)
 
@@ -43,7 +47,7 @@ class MultimodalLinearProbe(nn.Module):
             # Diagnóstico: confirma que o freeze funcionou
             trainable = sum(p.numel() for p in self.backbone.parameters() if p.requires_grad)
             total = sum(p.numel() for p in self.backbone.parameters())
-            print(f"[DEBUG] Backbone '{model_name}': {trainable}/{total} parâmetros treináveis (esperado: 0)")
+            logger.info(f"[DEBUG] Backbone '{model_name}': {trainable}/{total} parâmetros treináveis (esperado: 0)")
         
         self.classifier = nn.Linear(hidden_size, num_classes)
 

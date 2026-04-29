@@ -1,3 +1,4 @@
+
 import argparse
 import os
 import torch
@@ -9,6 +10,8 @@ from data.dataset import NTDDataset
 from models.classifier import ModelFactory
 from models.trainer import ModelTrainer as Trainer
 from features.preprocessors import HairRemovalFilter
+from utils.logger import logger
+
 
 def main():
     # 1. Configuração de Argumentos
@@ -25,22 +28,22 @@ def main():
     if torch.cuda.is_available():
         # torch.cuda.empty_cache()
         pass
-        print(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
+        logger.info(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
     else:
-        print("⚠️ CUDA não disponível. Usando CPU, o que pode ser muito lento para modelos grandes!")
+        logger.info("⚠️ CUDA não disponível. Usando CPU, o que pode ser muito lento para modelos grandes!")
         
-    print(f"✅ Dispositivo selecionado: {device}")
+    logger.info(f"✅ Dispositivo selecionado: {device}")
 
     # 3. Verificação de Dados
     data_dir = Path("dataset/processed/Dataset-NTD-V1")
     test_dir = data_dir / "test" # <<< ATENÇÃO AQUI: Lendo da pasta de teste
     
     if not test_dir.exists():
-        print(f"❌ ERRO: A pasta de teste não foi encontrada em {test_dir}")
+        logger.info(f"❌ ERRO: A pasta de teste não foi encontrada em {test_dir}")
         return
 
-    print(f"✅ Avaliando {len(args.classes)} classes: {args.classes}")
-    print(f"✅ Modelos a serem testados: {args.nets}")
+    logger.info(f"✅ Avaliando {len(args.classes)} classes: {args.classes}")
+    logger.info(f"✅ Modelos a serem testados: {args.nets}")
 
     # Certifique-se de que a lista de modelos bate com os que você treinou e salvou
     MODELS_TO_TEST = args.nets
@@ -53,19 +56,19 @@ def main():
         "vit_base_patch16_224"         # Via timm
     ]
     if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):
-        print(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
+        logger.info(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
         return
 
 
     for model_name in MODELS_TO_TEST:
-        print(f"\n" + "="*60)
-        print(f"[*] INICIANDO AVALIAÇÃO DE TESTE: {model_name}")
+        logger.info(f"\n" + "="*60)
+        logger.info(f"[*] INICIANDO AVALIAÇÃO DE TESTE: {model_name}")
         
         # Caminho do modelo salvo pelo run_experiment.py
         saved_model_path = f"models/saved/best_{model_name.replace('/', '_')}.pth"
                 
         if not os.path.exists(saved_model_path):
-            print(f"⚠️ AVISO: Pesos não encontrados em {saved_model_path}. Pule este modelo ou treine-o primeiro.")
+            logger.info(f"⚠️ AVISO: Pesos não encontrados em {saved_model_path}. Pule este modelo ou treine-o primeiro.")
             continue
 
         # 4. Criar o modelo
@@ -73,7 +76,7 @@ def main():
         
         # Carregar os pesos treinados ANTES de encapsular no DataParallel
         model.load_state_dict(torch.load(saved_model_path, map_location=device))
-        print(f"[+] Pesos carregados com sucesso: {saved_model_path}")
+        logger.info(f"[+] Pesos carregados com sucesso: {saved_model_path}")
         
         # Mover para a GPU
         model = model.to(device)
@@ -97,7 +100,7 @@ def main():
         
         # Chama a função que já criamos no trainer.py para imprimir o Classification Report
         trainer.test_and_report(test_loader, target_names=args.classes)
-        print(f"[*] Avaliação de teste concluída para: {model_name}")
+        logger.info(f"[*] Avaliação de teste concluída para: {model_name}")
 
 if __name__ == "__main__":
     mp.set_start_method('spawn', force=True)

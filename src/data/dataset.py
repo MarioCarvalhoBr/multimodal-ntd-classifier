@@ -5,6 +5,9 @@ from PIL import Image
 from pathlib import Path
 import os
 
+from utils.logger import logger
+
+
 # Desativa o multithreading interno do OpenCV para evitar deadlocks com o DataLoader
 # Isso é essencial para usar num_workers > 0 sem travamentos (segmentation faults)
 cv2.setNumThreads(0)
@@ -48,7 +51,7 @@ class NTDDataset(Dataset):
                     if img_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
                         self.images.append((img_path, self.class_to_idx[cls]))
             else:
-                print(f"Aviso: O diretório para a classe '{cls}' não foi encontrado em {cls_path}")
+                logger.info(f"Aviso: O diretório para a classe '{cls}' não foi encontrado em {cls_path}")
 
     def __len__(self):
         return len(self.images)
