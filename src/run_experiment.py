@@ -13,6 +13,7 @@ def main():
     # 1. Configuração de Argumentos
     parser = argparse.ArgumentParser(description="Orquestrador de Experimentos Multimodais I CADTN")
     parser.add_argument("--classes", nargs="+", required=True)
+    parser.add_argument("--nets", nargs="+", required=True, help="Lista de modelos a serem testados (ex: efficientnet_b3 openai/clip-vit-base-patch16)")
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--num_workers", type=int, default=0)
@@ -31,6 +32,12 @@ def main():
         # Inicializa o contexto CUDA forçadamente na thread principal
         #torch.cuda.init()
         print(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
+    
+    # Plotar o numero da GPU utilizada
+    if torch.cuda.is_available():
+        gpu_id = torch.cuda.current_device()
+        print(f"✅ GPU atual: {gpu_id} - {torch.cuda.get_device_name(gpu_id)}")
+        
     # 3. Verificação de Segurança das Classes
     data_dir = Path("dataset/processed/Dataset-NTD-V1")
     train_dir = data_dir / "train"
@@ -43,10 +50,18 @@ def main():
 
     print(f"✅ Treinando para {len(args.classes)} classes: {args.classes}")
 
-    MODELS_TO_TEST = [
-        # "efficientnet_b3",
-        "openai/clip-vit-base-patch16"
+    MODELS_TO_TEST = args.nets
+    
+    ALLOWED_MODELS = [
+        "google/siglip-base-patch16-224",
+        "openai/clip-vit-base-patch16",
+        # Baselines Tradicionais de Visão
+        "efficientnet_b3",             # Via timm
+        "vit_base_patch16_224"         # Via timm
     ]
+    if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):
+        print(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
+        return
 
     for model_name in MODELS_TO_TEST:
         print(f"\n" + "#"*60)
@@ -75,7 +90,7 @@ def main():
 
         # Treinamento (O ModelTrainer criará o otimizador internamente APÓS o modelo estar no device)
         trainer = ModelTrainer(model, device=str(device))
-        save_path = f"models/saved/best_{model_name.replace('/', '_')}.pt"
+        save_path = f"models/saved/best_{model_name.replace('/', '_')}.pth"
         
         trainer.fit(train_loader, val_loader, epochs=args.epochs, save_path=save_path)
         trainer.save_curves(model_name)

@@ -14,6 +14,7 @@ def main():
     # 1. Configuração de Argumentos
     parser = argparse.ArgumentParser(description="Avaliador Final de Modelos I CADTN")
     parser.add_argument("--classes", nargs="+", required=True, help="As mesmas classes usadas no treinamento")
+    parser.add_argument("--nets", nargs="+", required=True, help="Lista de modelos a serem testados (ex: efficientnet_b3 openai/clip-vit-base-patch16)")
     parser.add_argument("--batch_size", type=int, default=128, help="Tamanho do batch para inferência")
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--use_single_gpu", action="store_true")
@@ -34,20 +35,29 @@ def main():
         return
 
     print(f"✅ Avaliando {len(args.classes)} classes: {args.classes}")
+    print(f"✅ Modelos a serem testados: {args.nets}")
 
     # Certifique-se de que a lista de modelos bate com os que você treinou e salvou
-    MODELS_TO_TEST = [
-        # "efficientnet_b3",
-        "openai/clip-vit-base-patch16"
+    MODELS_TO_TEST = args.nets
+    
+    ALLOWED_MODELS = [
+        "google/siglip-base-patch16-224",
+        "openai/clip-vit-base-patch16",
+        # Baselines Tradicionais de Visão
+        "efficientnet_b3",             # Via timm
+        "vit_base_patch16_224"         # Via timm
     ]
+    if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):
+        print(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
+        return
+
 
     for model_name in MODELS_TO_TEST:
         print(f"\n" + "="*60)
         print(f"[*] INICIANDO AVALIAÇÃO DE TESTE: {model_name}")
         
         # Caminho do modelo salvo pelo run_experiment.py
-        saved_model_path = f"models/saved/best_{model_name.replace('/', '_')}.pt"
-        saved_model_path = f"models/saved/best_openai_clip-vit-base-patch16.pth"
+        saved_model_path = f"models/saved/best_{model_name.replace('/', '_')}.pth"
                 
         if not os.path.exists(saved_model_path):
             print(f"⚠️ AVISO: Pesos não encontrados em {saved_model_path}. Pule este modelo ou treine-o primeiro.")
