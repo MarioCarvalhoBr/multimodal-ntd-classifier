@@ -23,6 +23,10 @@ def main():
     batch_size = 128
     epochs = 10
     
+    print(f"[*] Diretório de dados: {data_dir}")
+    print(f"[*] Batch size: {batch_size}")
+    print(f"[*] Épocas: {epochs}")
+    
     # Modelos que você listou para comparar
     models_to_test = [
         # "openai/clip-vit-base-patch32",
