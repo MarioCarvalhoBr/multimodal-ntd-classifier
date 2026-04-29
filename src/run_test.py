@@ -55,8 +55,6 @@ def main():
     if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):
         logger.info(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
         return
-        "vit_base_patch16_224"         # Via timm
-    ]
     if any(model not in ALLOWED_MODELS for model in MODELS_TO_TEST):
         logger.info(f"❌ ERRO: Um ou mais modelos solicitados não estão na lista de modelos permitidos: {ALLOWED_MODELS}")
         return
@@ -67,7 +65,12 @@ def main():
         logger.info(f"[*] INICIANDO AVALIAÇÃO DE TESTE: {model_name}")
         
         # Caminho do modelo salvo pelo run_experiment.py
-        saved_model_path = f"models/saved/best_{model_name.replace('/', '_')}.pth"
+        
+        model_tag = model_name.replace("/", "_")
+        output_dir = Path(f"output/results/{model_tag}/saved_model")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        saved_model_path = f"{output_dir}/best_{model_name.replace('/', '_')}.pth"
                 
         if not os.path.exists(saved_model_path):
             logger.info(f"⚠️ AVISO: Pesos não encontrados em {saved_model_path}. Pule este modelo ou treine-o primeiro.")

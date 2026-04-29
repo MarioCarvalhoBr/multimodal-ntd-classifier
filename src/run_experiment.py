@@ -105,7 +105,11 @@ def main():
 
         # Treinamento (O ModelTrainer criará o otimizador internamente APÓS o modelo estar no device)
         trainer = ModelTrainer(model, device=str(device))
-        save_path = f"models/saved/best_{model_name.replace('/', '_')}.pth"
+        model_tag = model_name.replace("/", "_")
+        output_dir = Path(f"output/results/{model_tag}/saved_model")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        save_path = f"{output_dir}/best_{model_name.replace('/', '_')}.pth"
         
         trainer.fit(train_loader, val_loader, epochs=args.epochs, save_path=save_path)
         trainer.save_curves(model_name)
