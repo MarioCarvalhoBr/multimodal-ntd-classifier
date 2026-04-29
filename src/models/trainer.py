@@ -20,10 +20,8 @@ class ModelTrainer:
         self.model = model
         self.device = device
         self.criterion = torch.nn.CrossEntropyLoss()
-        # Otimizador criado aqui garante que os parâmetros já estejam no device correto
         
-        # Filtrar parâmetros com requires_grad = True.
-        # Parâmetros com requires_grad = False dentro do Adam podem causar falhas no PyTorch/timm.
+        # Garante que o otimizador só recebe os parâmetros da camada final treinável
         trainable_params = [p for p in self.model.parameters() if p.requires_grad]
         self.optimizer = torch.optim.Adam(trainable_params, lr=lr)
         
