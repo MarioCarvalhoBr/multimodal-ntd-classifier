@@ -1,60 +1,67 @@
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+# Força a pasta 'src' a ser o diretório raiz para os imports
+src_path = str(Path(__file__).resolve().parent.parent)
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
 
 import argparse
 import cv2
 import numpy as np
 import os
-from pathlib import Path
 from typing import List, Dict
 from tqdm import tqdm
-import sys
 
 from utils.logger import logger
 
-
-# Adiciona a pasta 'src' ao path
-# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-
 class DatasetAnalyzer:
-    """Analisa e limpa datasets identificando imagens vazias/corrompidas."""
+    """Analisa e limpa datasets identificando imagens vazias e arquivos corrompidos."""
     
     def __init__(self, data_dir: str):
         self.data_dir = Path(data_dir)
         self.splits = ['train', 'val', 'test']
+        
+        # Listas separadas para rastreabilidade fina
         self.black_images = []
+        self.corrupted_images = []
         
         # Estatísticas
         self.stats = {
             "total_images": 0,
             "total_black": 0,
+            "total_corrupted": 0,
             "split_counts": {s: 0 for s in self.splits},
             "class_counts": {}
         }
 
-    def _is_black_image(self, img_path: Path) -> bool:
-        """Verifica se uma imagem é completamente preta (ou praticamente preta)."""
+    def _check_image_status(self, img_path: Path) -> str:
+        """
+        Verifica o status da imagem.
+        Retorna: 'ok', 'black' (toda preta) ou 'corrupted' (erro de leitura/0 bytes)
+        """
         try:
-            # Lemos a imagem em escala de cinza
+            # 1. Verifica se o arquivo está vazio no disco (0 bytes)
+            if img_path.stat().st_size == 0:
+                return "corrupted"
+
+            # 2. Tenta ler a imagem com o OpenCV
             img = cv2.imread(str(img_path), cv2.IMREAD_GRAYSCALE)
             if img is None:
-                return True # Considera arquivo corrompido como 'preto/inválido'
+                return "corrupted"
             
-            # Verifica se o valor máximo de pixel é 0 (ou muito próximo)
-            # Usamos um limiar pequeno (ex: 5) para lidar com ruído de compressão JPEG
+            # 3. Verifica se a imagem é completamente preta (ou ruído imperceptível)
             if np.max(img) <= 5: 
-                return True
+                return "black"
                 
-            return False
+            return "ok"
         except Exception:
-            return True
+            # Qualquer erro de I/O ou decodificação cai aqui
+            return "corrupted"
 
     def analyze(self):
-        """Varre o dataset coletando estatísticas e identificando imagens pretas."""
-        logger.info(f"[*] Iniciando análise do dataset em: {self.data_dir}")
+        """Varre o dataset coletando estatísticas e classificando as imagens."""
+        logger.info(f"[*] Iniciando análise de integridade em: {self.data_dir}")
         
         if not self.data_dir.exists():
             raise FileNotFoundError(f"Diretório não encontrado: {self.data_dir}")
@@ -78,33 +85,42 @@ class DatasetAnalyzer:
                     self.stats["split_counts"][split] += 1
                     self.stats["class_counts"][cls_name] += 1
                     
-                    if self._is_black_image(img_path):
+                    status = self._check_image_status(img_path)
+                    
+                    if status == "black":
                         self.stats["total_black"] += 1
                         self.black_images.append(img_path)
+                    elif status == "corrupted":
+                        self.stats["total_corrupted"] += 1
+                        self.corrupted_images.append(img_path)
 
-    def purge_black_images(self):
-        """Remove fisicamente as imagens pretas do disco."""
-        if not self.black_images:
-            logger.info("[+] Nenhuma imagem preta para remover.")
+    def purge_invalid_images(self):
+        """Remove fisicamente as imagens pretas e corrompidas do disco."""
+        invalid_images = self.black_images + self.corrupted_images
+        
+        if not invalid_images:
+            logger.info("[+] Nenhuma imagem inválida para remover. Dataset limpo!")
             return
 
-        logger.info(f"[*] Removendo {len(self.black_images)} imagens vazias...")
-        for img_path in tqdm(self.black_images, desc="Purgando imagens"):
+        logger.info(f"[*] Purgando {len(invalid_images)} imagens inválidas do disco...")
+        for img_path in tqdm(invalid_images, desc="Excluindo arquivos"):
             try:
-                img_path.unlink()
+                if img_path.exists():
+                    img_path.unlink()
             except Exception as e:
                 logger.error(f"Erro ao remover {img_path}: {e}")
         
-        logger.info("[+] Limpeza concluída.")
+        logger.info("[+] Limpeza concluída com sucesso.")
 
     def generate_report(self, output_file: str):
         """Gera o arquivo de sumário detalhado."""
         report_path = Path(output_dir) / output_file
         report_path.parent.mkdir(parents=True, exist_ok=True)
         
-        pct_black = 0
+        total_invalid = self.stats["total_black"] + self.stats["total_corrupted"]
+        pct_invalid = 0
         if self.stats["total_images"] > 0:
-            pct_black = (self.stats["total_black"] / self.stats["total_images"]) * 100
+            pct_invalid = (total_invalid / self.stats["total_images"]) * 100
 
         with open(report_path, "w", encoding="utf-8") as f:
             f.write("="*50 + "\n")
@@ -113,8 +129,9 @@ class DatasetAnalyzer:
             
             f.write("1. ESTATÍSTICAS GERAIS\n")
             f.write(f"Total Geral de Imagens: {self.stats['total_images']}\n")
-            f.write(f"Total de Imagens Pretas/Inválidas: {self.stats['total_black']}\n")
-            f.write(f"Porcentagem de Imagens Inválidas: {pct_black:.2f}%\n\n")
+            f.write(f"Total de Imagens Corrompidas (Erro/0 bytes): {self.stats['total_corrupted']}\n")
+            f.write(f"Total de Imagens Vazias (Pretas): {self.stats['total_black']}\n")
+            f.write(f"Porcentagem Total de Inválidas: {pct_invalid:.2f}%\n\n")
             
             f.write("2. DISTRIBUIÇÃO POR SPLIT\n")
             for split, count in self.stats["split_counts"].items():
@@ -127,59 +144,54 @@ class DatasetAnalyzer:
             f.write("\n")
             
             f.write("="*50 + "\n")
-            f.write("4. LISTA DE IMAGENS PRETAS/INVÁLIDAS\n")
+            f.write("4. LISTA DE IMAGENS CORROMPIDAS (ERRO DE LEITURA)\n")
             f.write("="*50 + "\n")
+            self._write_grouped_list(f, self.corrupted_images)
             
-            if not self.black_images:
-                f.write("Nenhuma imagem inválida encontrada.\n")
-            else:
-                # Agrupa os caminhos para exibição organizada
-                grouped_paths = {}
-                for path in self.black_images:
-                    # Ex: train/clinical_leprosy
-                    group_key = f"{path.parent.parent.name}/{path.parent.name}" 
-                    if group_key not in grouped_paths:
-                        grouped_paths[group_key] = []
-                    grouped_paths[group_key].append(path.name)
-                
-                for group, files in grouped_paths.items():
-                    f.write(f"\n[{group}]\n")
-                    for file in files:
-                        f.write(f"  └── {file}\n")
+            f.write("\n" + "="*50 + "\n")
+            f.write("5. LISTA DE IMAGENS VAZIAS (FUNDO PRETO)\n")
+            f.write("="*50 + "\n")
+            self._write_grouped_list(f, self.black_images)
                         
         logger.info(f"[+] Relatório gerado com sucesso em: {report_path}")
 
+    def _write_grouped_list(self, file_handle, image_list):
+        """Função auxiliar para escrever as listas de forma agrupada por pasta."""
+        if not image_list:
+            file_handle.write("Nenhuma imagem detectada nesta categoria.\n")
+            return
+            
+        grouped_paths = {}
+        for path in image_list:
+            group_key = f"{path.parent.parent.name}/{path.parent.name}" 
+            if group_key not in grouped_paths:
+                grouped_paths[group_key] = []
+            grouped_paths[group_key].append(path.name)
+        
+        for group, files in grouped_paths.items():
+            file_handle.write(f"\n[{group}]\n")
+            for file in files:
+                file_handle.write(f"  └── {file}\n")
 
 def main():
     parser = argparse.ArgumentParser(description="Analisa e limpa o dataset de imagens vazias/corrompidas.")
     parser.add_argument("--data_dir", type=str, default="dataset/processed/Dataset-NTD-V1", help="Caminho raiz do dataset processado")
-    parser.add_argument("--purge-void", action="store_true", help="Ativa a remoção física das imagens detectadas como pretas/corrompidas")
+    parser.add_argument("--purge-void", action="store_true", help="Ativa a remoção física das imagens corrompidas e pretas")
     args = parser.parse_args()
 
-    # O output do relatório será salvo na pasta de análise de dados
     global output_dir
     output_dir = Path("output/data_analysis")
 
     analyzer = DatasetAnalyzer(args.data_dir)
     
-    # 1. Varre o dataset
     analyzer.analyze()
-    
-    # 2. Gera o relatório (antes de apagar, para ter o registro histórico do que estava ruim)
     analyzer.generate_report("summary_dataset.txt")
     
-    # 3. Apaga se a flag for acionada
     if args.purge_void:
-        analyzer.purge_black_images()
+        analyzer.purge_invalid_images()
     else:
-        logger.info("\n[*] DICA: As imagens pretas foram apenas listadas no relatório.")
+        logger.info("\n[*] DICA: As imagens inválidas foram apenas listadas no relatório.")
         logger.info("[*] Para apagá-las do disco, execute o script com a flag: --purge-void")
 
 if __name__ == "__main__":
     main()
-    
-# Use example without argparse (for testing purposes): 
-# poetry run python src/data/dataset_analyser.py
-
-# Use example with argparse: 
-# poetry run python src/data/dataset_analyser.py --purge-void

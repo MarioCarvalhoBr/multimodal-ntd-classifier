@@ -1,6 +1,8 @@
 # Local data
 dataset/*
 dataset/
+dataset2/*
+dataset2/
 model/
 models/*
 local_data/*

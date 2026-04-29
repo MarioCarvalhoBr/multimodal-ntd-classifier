@@ -3,22 +3,28 @@ RELATÓRIO DE INTEGRIDADE DO DATASET
 ==================================================
 
 1. ESTATÍSTICAS GERAIS
-Total Geral de Imagens: 54734
-Total de Imagens Pretas/Inválidas: 0
-Porcentagem de Imagens Inválidas: 0.00%
+Total Geral de Imagens: 127824
+Total de Imagens Corrompidas (Erro/0 bytes): 0
+Total de Imagens Vazias (Pretas): 0
+Porcentagem Total de Inválidas: 0.00%
 
 2. DISTRIBUIÇÃO POR SPLIT
-  - TRAIN: 38315 imagens
-  - VAL: 8202 imagens
-  - TEST: 8217 imagens
+  - TRAIN: 89475 imagens
+  - VAL: 19167 imagens
+  - TEST: 19182 imagens
 
 3. DISTRIBUIÇÃO POR CLASSE
-  - microscopy_schistosomiasis: 14618 imagens
+  - microscopy_schistosomiasis: 87708 imagens
   - microscopy_parasites_general: 34298 imagens
   - microscopy_chagas: 4290 imagens
   - clinical_leprosy: 1528 imagens
 
 ==================================================
-4. LISTA DE IMAGENS PRETAS/INVÁLIDAS
+4. LISTA DE IMAGENS CORROMPIDAS (ERRO DE LEITURA)
 ==================================================
-Nenhuma imagem inválida encontrada.
+Nenhuma imagem detectada nesta categoria.
+
+==================================================
+5. LISTA DE IMAGENS VAZIAS (FUNDO PRETO)
+==================================================
+Nenhuma imagem detectada nesta categoria.

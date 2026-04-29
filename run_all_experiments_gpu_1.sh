@@ -8,13 +8,14 @@ export CUDA_LAUNCH_BLOCKING=1
 
 # Lista de modelos (Use as tags exatas do Hugging Face)
 MODELS=(
-    "google/siglip-base-patch16-224"
-    "openai/clip-vit-base-patch16"
+    # "google/siglip-base-patch16-224"
+    # "openai/clip-vit-base-patch16"
+    "microsoft/resnet-50"
 )
 
 # Configurações globais
-CLASSES="clinical_leprosy microscopy_chagas microscopy_schistosomiasis microscopy_parasites_general"
-EPOCHS=4
+CLASSES="microscopy_chagas microscopy_schistosomiasis microscopy_parasites_general"
+EPOCHS=1
 NUM_WORKERS=0 # Mantenha 0 para estabilidade
 CUDA_DEVICE=1 # GPU a ser utilizada (0, 1, etc.)
 

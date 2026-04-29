@@ -14,7 +14,7 @@ MODELS=(
 )
 
 # Configurações globais
-CLASSES="clinical_leprosy microscopy_chagas microscopy_schistosomiasis"
+CLASSES="microscopy_chagas microscopy_schistosomiasis microscopy_parasites_general"
 EPOCHS=4
 NUM_WORKERS=0 # Mantenha 0 para estabilidade
 CUDA_DEVICE=0 # GPU a ser utilizada (0, 1, etc.)
