@@ -76,7 +76,7 @@ O download dos datasets é automatizado via `kagglehub`. Para isso:
 ```env
 KAGGLE_USERNAME="seu_usuario_aqui"
 KAGGLE_KEY="sua_chave_longa_aqui"
-PROCESSED_DATA_DIR="data/processed/Dataset-NTD-V1"
+PROCESSED_DATA_DIR="dataset/processed/Dataset-NTD-V1"
 ```
 
 ---

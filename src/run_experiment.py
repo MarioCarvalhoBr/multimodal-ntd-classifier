@@ -1,104 +1,110 @@
+
+
+import argparse
 import os
-import sys
-
-os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-# Adiciona a pasta 'src' ao path do Python para ele encontrar os módulos locais
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
+from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
-
-from data.dataset import NTDVisionDataset
-from features.preprocessors import HairRemovalFilter
+from data.dataset import NTDDataset
 from models.classifier import ModelFactory
-from models.trainer import ModelTrainer
+from models.trainer import ModelTrainer as Trainer
+from features.preprocessors import HairRemovalPreprocessor
 
 def main():
-    # 1. Configurações gerais do experimento
-    data_dir = os.getenv("PROCESSED_DATA_DIR", "dataset/processed/Dataset-NTD-V1")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Usando device: {device}")
+    # 1. Configuração de Argumentos
+    parser = argparse.ArgumentParser(description="Orquestrador de Experimentos Multimodais I CADTN")
+    parser.add_argument(
+        "--classes", 
+        nargs="+", 
+        help="Nomes das pastas das classes a treinar (ex: clinical_leprosy chagas_microscopy)",
+        required=True
+    )
+    parser.add_argument("--epochs", type=int, default=10, help="Número de épocas")
+    parser.add_argument("--batch_size", type=int, default=512, help="Batch size (sugerido 512 para 2x RTX 3080)")
+    parser.add_argument("--num_workers", type=int, default=4, help="Número de workers para o DataLoader")
+    args = parser.parse_args()
+
+    # 2. Verificação de Segurança das Classes
+    data_dir = Path("dataset/processed/Dataset-NTD-V1")
+    train_dir = data_dir / "train"
+    
+    # Lista classes disponíveis no disco
+    available_classes = [d.name for d in train_dir.iterdir() if d.is_dir()]
+    
+    # Valida se as classes escolhidas existem
+    for cls in args.classes:
+        if cls not in available_classes:
+            print(f"❌ ERRO: A classe '{cls}' não foi encontrada em {train_dir}")
+            print(f"Classes disponíveis: {available_classes}")
+            return
+
+    print(f"✅ Validação concluída. Treinando para {len(args.classes)} classes: {args.classes}")
+
+    # 3. Configuração de Hardware (Multi-GPU)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"------>Usando device: {device}")
     print(f'Cuda disponível: {torch.cuda.is_available()}')
     print(f'Quantidade de GPUs: {torch.cuda.device_count()}')
     print(f'GPU atual: {torch.cuda.get_device_name(0)}')
-    batch_size = 512
-    num_workers = 4
-    epochs = 10
     
-    print(f"[*] Diretório de dados: {data_dir}")
-    print(f"[*] Batch size: {batch_size}")
-    print(f"[*] Número de workers: {num_workers}")
-    print(f"[*] Épocas: {epochs}")
+    print(f"Batch size: {args.batch_size}")
+    print(f"Epochs: {args.epochs}")
+    print(f"Num workers: {args.num_workers}")
     
-    # Modelos que você listou para comparar
-    models_to_test = [
-        # "openai/clip-vit-base-patch32",
-        "openai/clip-vit-base-patch16",
-        "google/siglip-base-patch16-224",
-        # "openai/clip-vit-large-patch14" # (Descomente se tiver VRAM suficiente)
+    print(f"[*] Usando device: {device} ({torch.cuda.device_count()} GPUs detectadas)")
+    print(f"[*] Classes selecionadas: {args.classes}")
+    
+    print(f"------>")
+
+    MODELS_TO_TEST = [
+        #"google/siglip-base-patch16-224",
+        #"openai/clip-vit-base-patch16",
+        "efficientnet_b3",
+        #"vit_base_patch16_224"
     ]
 
-    # Instanciando nosso filtro do Phase 1
-    # Observação: será ativado dentro do Dataset apenas para as imagens clínicas
-    preprocessor = HairRemovalFilter(kernel_size=(17, 17), threshold=10)
-
-    # 2. Loop de Experimentos
-    for model_name in models_to_test:
-        print("\n" + "#"*60)
+    for model_name in MODELS_TO_TEST:
+        print(f"\n" + "#"*60)
         print(f"[*] INICIANDO EXPERIMENTO: {model_name}")
         print("#"*60)
 
-        # Usando nossa Factory para criar o Modelo e Processador
-        model, processor = ModelFactory.create(
-            model_name=model_name, 
-            num_classes=4, # Leprosy, Chagas, Parasites_Gen, Schistosomiasis
-            # freeze_backbone=True # Linear Probing
-        )
+        # Criar modelo e processor
+        model, processor = ModelFactory.create(model_name, num_classes=len(args.classes))
         
-        # 3. IMPLEMENTAÇÃO MULTI-GPU (DataParallel)
-        if torch.cuda.device_count() > 1:
-            pass
-            # print(f"[*] Detectadas {torch.cuda.device_count()} GPUs. Ativando paralelismo...")
-            # O DataParallel divide o batch_size entre as GPUs automaticamente
-            # model = torch.nn.DataParallel(model)
-
+        # Ativar DataParallel para as 2x RTX 3080
+        # if torch.cuda.device_count() > 1:
+        #    model = torch.nn.DataParallel(model)
         model.to(device)
 
-        # Criando os Datasets com o processador específico deste modelo
-        train_dataset = NTDVisionDataset(f"{data_dir}/train", processor, preprocessor)
-        val_dataset = NTDVisionDataset(f"{data_dir}/val", processor, preprocessor)
-        test_dataset = NTDVisionDataset(f"{data_dir}/test", processor, preprocessor)
+        # Carregar datasets filtrados pelas classes escolhidas
+        # Inicializa o preprocessor da Fase 1
+        hair_preprocessor = HairRemovalPreprocessor()
 
-        # Classes extraídas automaticamente pelas pastas
-        class_names = train_dataset.classes
-
-        # DataLoaders
-        train_loader = DataLoader(
-            train_dataset, 
-            batch_size=batch_size, 
-            num_workers=num_workers, 
-            pin_memory=True, 
-            shuffle=True
+        # Passa o preprocessor para o Dataset
+        train_dataset = NTDDataset(
+            data_dir / "train", 
+            processor, 
+            class_filter=args.classes, 
+            custom_preprocessor=hair_preprocessor
         )
+        val_dataset = NTDDataset(
+            data_dir / "val", 
+            processor, 
+            class_filter=args.classes, 
+            custom_preprocessor=hair_preprocessor
+        )
+
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
+        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, pin_memory=True)
+
+        # Treinamento
+        trainer = Trainer(model, device=device)
+        save_path = f"output/best_model_{model_name.replace('/', '_')}.pt"
         
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-
-        # Configurando o Treinador
-        trainer = ModelTrainer(model=model, device=device, learning_rate=1e-3)
-
-        # Caminho para salvar o melhor peso
-        safe_model_name = model_name.replace("/", "_")
-        save_path = f"models/saved/{safe_model_name}_best.pth"
-
-        # Rodando o Fit (Treinamento e Validação)
-        trainer.fit(train_loader, val_loader, epochs=epochs, save_path=save_path)
-
-        # Carregando o melhor peso para o Teste Final
-        model.load_state_dict(torch.load(save_path))
+        trainer.fit(train_loader, val_loader, epochs=args.epochs, save_path=save_path)
         
-        # Relatório Final
-        trainer.test_and_report(test_loader, target_names=class_names)
+        # Salvar curvas em PDF
+        trainer.save_curves(model_name)
 
 if __name__ == "__main__":
     main()

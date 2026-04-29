@@ -1,50 +1,47 @@
 import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoImageProcessor
+import timm
 
 class MultimodalLinearProbe(nn.Module):
-    """
-    Implementa Linear Probing sobre backbones multimodais (CLIP/SigLIP).
-    O backbone extrai features e a camada linear classifica.
-    """
-    def __init__(self, model_name: str, num_classes: int, freeze_backbone: bool = True):
+    def __init__(self, model_name, num_classes, freeze_backbone=True):
         super().__init__()
-        self.model_name = model_name
-        
-        print(f"[*] Carregando backbone: {model_name}...")
-        self.backbone = AutoModel.from_pretrained(model_name)
-        
-        # Congela os pesos do backbone para treinar apenas o classificador (Linear Probing)
+        # Verifica se é um modelo timm ou HF
+        if "efficientnet" in model_name or "vit_base_patch16_224" in model_name:
+            self.backbone = timm.create_model(model_name, pretrained=True, num_classes=0)
+            self.is_timm = True
+            # Pega a dimensão de saída correta do timm
+            with torch.no_grad():
+                dummy = torch.randn(1, 3, 224, 224)
+                hidden_size = self.backbone(dummy).shape[1]
+        else:
+            self.backbone = AutoModel.from_pretrained(model_name)
+            self.is_timm = False
+            hidden_size = self.backbone.config.vision_config.hidden_size if "clip" in model_name else self.backbone.config.hidden_size
+
         if freeze_backbone:
             for param in self.backbone.parameters():
                 param.requires_grad = False
-                
-        # Identifica dinamicamente a dimensão de saída (512 para base, 768 para large/siglip)
-        hidden_size = self.backbone.config.vision_config.hidden_size \
-                      if hasattr(self.backbone.config, 'vision_config') \
-                      else self.backbone.config.hidden_size
-                      
-        print(f"[+] Hidden size detectado: {hidden_size}")
         
-        # Cabeçalho de Classificação
         self.classifier = nn.Linear(hidden_size, num_classes)
 
     def forward(self, pixel_values):
-        # Passa a imagem pelo Vision Transformer do modelo
-        outputs = self.backbone.vision_model(pixel_values=pixel_values)
-        
-        # Extrai o [CLS] token (representação global da imagem)
-        pooled_output = outputs.pooler_output if outputs.pooler_output is not None else outputs.last_hidden_state[:, 0, :]
-        
-        # Classifica
-        logits = self.classifier(pooled_output)
-        return logits
+        if self.is_timm:
+            features = self.backbone(pixel_values)
+        else:
+            outputs = self.backbone.get_image_features(pixel_values) if hasattr(self.backbone, "get_image_features") else self.backbone(pixel_values).pooler_output
+            features = outputs
+            
+        return self.classifier(features)
 
 class ModelFactory:
-    """Factory Pattern para instanciar o modelo e seu processador associado."""
-    
     @staticmethod
-    def create(model_name: str, num_classes: int, freeze_backbone: bool = True):
-        processor = AutoImageProcessor.from_pretrained(model_name)
+    def create(model_name, num_classes, freeze_backbone=True):
+        # Para modelos tradicionais de visão, usamos o processador do ViT como padrão de normalização
+        if "efficientnet" in model_name or "vit_base_patch16_224" in model_name:
+            processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224")
+        else:
+            processor = AutoImageProcessor.from_pretrained(model_name)
+            
         model = MultimodalLinearProbe(model_name, num_classes, freeze_backbone)
         return model, processor

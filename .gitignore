@@ -1,11 +1,15 @@
 # Local data
 dataset/*
 dataset/
+model/
+models/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
+
+
 
 # C extensions
 *.so
@@ -220,3 +224,4 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+models/saved/

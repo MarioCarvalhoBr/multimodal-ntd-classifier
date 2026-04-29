@@ -1,54 +1,53 @@
-import os
 import cv2
-from PIL import Image
 import torch
 from torch.utils.data import Dataset
+from PIL import Image
 from pathlib import Path
 
-class NTDVisionDataset(Dataset):
-    """
-    Dataset PyTorch para carregar as imagens de DTNs.
-    Aplica processadores da Hugging Face e, opcionalmente, filtros customizados.
-    """
-    def __init__(self, root_dir: str, hf_processor, custom_preprocessor=None):
+class NTDDataset(Dataset):
+    def __init__(self, root_dir, hf_processor, class_filter=None, custom_preprocessor=None):
         self.root_dir = Path(root_dir)
         self.hf_processor = hf_processor
-        self.custom_preprocessor = custom_preprocessor
+        self.custom_preprocessor = custom_preprocessor # Correção do erro aqui
         
-        self.classes = sorted([d.name for d in self.root_dir.iterdir() if d.is_dir()])
+        # Se houver filtro, usa apenas as pastas listadas. Se não, usa todas.
+        if class_filter:
+            self.classes = sorted(class_filter)
+        else:
+            self.classes = sorted([d.name for d in self.root_dir.iterdir() if d.is_dir()])
+            
         self.class_to_idx = {cls_name: i for i, cls_name in enumerate(self.classes)}
+        self.images = []
         
-        self.image_paths = []
-        self.labels = []
-        
-        for cls_name in self.classes:
-            cls_dir = self.root_dir / cls_name
-            for img_path in cls_dir.rglob("*.*"):
-                if img_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
-                    self.image_paths.append(img_path)
-                    self.labels.append(self.class_to_idx[cls_name])
+        for cls in self.classes:
+            cls_path = self.root_dir / cls
+            if cls_path.exists():
+                for img_path in cls_path.glob("*.*"):
+                    if img_path.suffix.lower() in ['.jpg', '.jpeg', '.png', '.png']:
+                        self.images.append((img_path, self.class_to_idx[cls]))
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.images)
 
     def __getitem__(self, idx):
-        img_path = str(self.image_paths[idx])
-        label = self.labels[idx]
+        img_path_obj, label = self.images[idx]
+        img_path_str = str(img_path_obj)
         
-        # Carregamento com OpenCV para compatibilidade com nosso preprocessor da Fase 1
-        image_cv = cv2.imread(img_path)
+        # Carregamento robusto com OpenCV
+        image_cv = cv2.imread(img_path_str)
+        if image_cv is None:
+            raise FileNotFoundError(f"Não foi possível ler a imagem: {img_path_str}")
+            
         image_cv = cv2.cvtColor(image_cv, cv2.COLOR_BGR2RGB)
         
-        # Aplica remoção de pelos apenas se for imagem clínica (ex: clinical_leprosy)
-        # Princípio Liskov: o preprocessor só é invocado se necessário
-        if self.custom_preprocessor and "clinical" in img_path:
+        # Aplica remoção de pelos apenas se for imagem clínica
+        if self.custom_preprocessor and "clinical" in img_path_str.lower():
             image_cv = self.custom_preprocessor.process(image_cv)
             
-        # Converte de volta para PIL Image, que é o formato nativo esperado pela Hugging Face
         image_pil = Image.fromarray(image_cv)
         
-        # Processador Hugging Face (Redimensionamento, Normalização específica do CLIP/SigLIP)
+        # Processamento para o modelo (CLIP/SigLIP/EfficientNet)
         encoding = self.hf_processor(images=image_pil, return_tensors="pt")
-        pixel_values = encoding['pixel_values'].squeeze(0) # Remove a dimensão do batch
+        pixel_values = encoding['pixel_values'].squeeze(0)
         
         return pixel_values, torch.tensor(label, dtype=torch.long)

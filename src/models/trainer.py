@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from tqdm import tqdm
 import os
+import matplotlib.pyplot as plt
+from pathlib import Path
 
 class ModelTrainer:
     """
@@ -14,6 +16,7 @@ class ModelTrainer:
     def __init__(self, model: nn.Module, device: str, learning_rate: float = 1e-3):
         self.device = torch.device(device)
         self.model = model.to(self.device)
+        self.history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
         
         # Como é Linear Probing, a Loss padrão é CrossEntropy
         self.criterion = nn.CrossEntropyLoss()
@@ -22,6 +25,36 @@ class ModelTrainer:
         trainable_params = [p for p in self.model.parameters() if p.requires_grad]
         self.optimizer = optim.AdamW(trainable_params, lr=learning_rate)
 
+    def save_curves(self, model_name):
+        output_dir = Path("output/figures")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        epochs = range(1, len(self.history["train_loss"]) + 1)
+        model_tag = model_name.replace("/", "_")
+        
+        plt.figure(figsize=(12, 5))
+        
+        # Plot Loss
+        plt.subplot(1, 2, 1)
+        plt.plot(epochs, self.history["train_loss"], 'b-', label='Treino')
+        plt.plot(epochs, self.history["val_loss"], 'r-', label='Validação')
+        plt.title(f'Loss - {model_name}')
+        plt.xlabel('Épocas')
+        plt.ylabel('Loss')
+        plt.legend()
+        
+        # Plot Accuracy
+        plt.subplot(1, 2, 2)
+        plt.plot(epochs, self.history["train_acc"], 'b-', label='Treino')
+        plt.plot(epochs, self.history["val_acc"], 'r-', label='Validação')
+        plt.title(f'Acurácia - {model_name}')
+        plt.xlabel('Épocas')
+        plt.ylabel('Acurácia')
+        plt.legend()
+        
+        plt.tight_layout()
+        plt.savefig(output_dir / f"learning_curves_{model_tag}.pdf")
+        plt.close()
     def _run_epoch(self, dataloader: DataLoader, is_train: bool = True):
         """Método interno para rodar uma época (Treino ou Validação)."""
         if is_train:
