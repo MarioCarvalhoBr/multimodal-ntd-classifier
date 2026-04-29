@@ -1,1 +1,121 @@
-# multimodal-ntd-classifier
+
+# Multimodal Vision-Language for Image Classification of Neglected Tropical Diseases
+
+![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c)
+![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Transformers-ffcc00)
+![Poetry](https://img.shields.io/badge/Poetry-Package%20Manager-cyan)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+Uma Prova de Conceito (PoC) para triagem e classificação de Doenças Tropicais Negligenciadas (DTNs) utilizando modelos Vision-Language (VLMs) de estado da arte, como CLIP e SigLIP. 
+
+Projeto desenvolvido e submetido como pesquisa para o **I Workshop de Computação Aplicada às Doenças Tropicais Negligenciadas (CADTN)**.
+
+---
+
+## 📖 Visão Geral
+
+Este projeto propõe um **Framework Unificado de Triagem Multimodal** desenhado para operar em ambientes com recursos limitados, como o Sistema Único de Saúde (SUS) do Brasil. 
+
+Devido à heterogeneidade dos dados médicos de DTNs, a arquitetura foi desenhada para lidar com duas ramificações de entrada:
+1. **Imagens Clínicas Macroscópicas:** (ex: Lesões de Hanseníase). Utiliza pré-processamento avançado (Filtro Morfológico Black-Hat + Inpainting TELEA) para remoção de artefatos visuais (pelos).
+2. **Imagens de Microscopia Laboratorial:** (ex: Doença de Chagas, Esquistossomose, Parasitas). Passagem direta para extração de features para preservar as estruturas celulares (caudas, flagelos).
+
+A classificação é realizada através de **Linear Probing** sobre os *backbones* congelados dos modelos multimodais, garantindo baixo custo computacional e preservando o conhecimento semântico-visual dos modelos pré-treinados.
+
+## 🗂 Estrutura do Projeto
+
+O código foi construído seguindo os princípios **SOLID** e padrões de **Clean Code**.
+
+```text
+cadtn_skin_lesion_poc/
+├── data/
+│   ├── raw/                 # Cache de download do Kaggle
+│   └── processed/           # Dataset unificado e estratificado (Train/Val/Test)
+├── src/
+│   ├── data/
+│   │   ├── dataset.py       # PyTorch Dataset customizado
+│   │   └── make_dataset.py  # Coleta, unificação e split dos dados
+│   ├── features/
+│   │   └── preprocessors.py # Filtros morfológicos e inpainting
+│   ├── models/
+│   │   ├── classifier.py    # Factory Pattern e Linear Probing (CLIP/SigLIP)
+│   │   └── trainer.py       # Loop de treinamento e métricas
+│   └── run_experiment.py    # Orquestrador de testes dos modelos
+├── .env.example             # Template de configuração de ambiente
+├── pyproject.toml           # Dependências do Poetry
+└── README.md                # Documentação do projeto
+```
+
+---
+
+## 🚀 Como Configurar o Ambiente
+
+O projeto utiliza o gerenciador de pacotes [Poetry](https://python-poetry.org/) para garantir reprodutibilidade estrita no Ubuntu 24.04 (ou ambientes compatíveis).
+
+### 1. Clonar o Repositório
+```bash
+git clone https://github.com/MarioCarvalhoBr/multimodal-ntd-classifier.git
+cd multimodal-ntd-classifier
+```
+
+### 2. Instalar Dependências
+Certifique-se de ter o Poetry instalado no seu sistema. Em seguida, instale as dependências:
+```bash
+poetry install
+```
+
+### 3. Configurar Credenciais do Kaggle
+O download dos datasets é automatizado via `kagglehub`. Para isso:
+1. Acesse o [Kaggle](https://www.kaggle.com/), vá em *Settings* e clique em **Create New Token**.
+2. Abra o arquivo `kaggle.json` baixado.
+3. Crie um arquivo chamado `.env` na raiz do projeto e insira suas credenciais:
+
+```env
+KAGGLE_USERNAME="seu_usuario_aqui"
+KAGGLE_KEY="sua_chave_longa_aqui"
+PROCESSED_DATA_DIR="data/processed/Dataset-NTD-V1"
+```
+
+---
+
+## 🧪 Como Executar a Pipeline
+
+### Fase 1: Coleta e Engenharia de Dados
+Este script baixa os datasets de Doenças Tropicais Negligenciadas, realiza o *Stratified Split* (70% Treino / 15% Validação / 15% Teste) e organiza as imagens no formato `ImageFolder`.
+
+```bash
+poetry run python src/data/make_dataset.py
+```
+
+### Fase 2 e 3: Treinamento e Avaliação (Linear Probing)
+Este orquestrador inicializa os modelos (SigLIP e variações do CLIP), aplica a remoção de pelos apenas para as imagens clínicas (Hanseníase) e executa o *Linear Probing*. O melhor modelo (com base no *validation loss*) é salvo e avaliado contra o conjunto de teste.
+
+```bash
+poetry run python src/run_experiment.py
+```
+
+Os resultados finais (Acurácia, Precision, Recall e F1-Score Macro) serão gerados e exibidos diretamente no terminal para a compilação do artigo.
+
+---
+
+## 📊 Modelos Avaliados
+* `openai/clip-vit-base-patch32` (Prototipagem rápida, leve e estável)
+* `openai/clip-vit-base-patch16` (Maior resolução visual)
+* `google/siglip-base-patch16-224` (SOTA em compreensão semântico-visual)
+
+---
+
+## 📝 Citação e Licença
+Se utilizar este código em sua pesquisa, por favor, cite nosso trabalho submetido ao I CADTN.
+
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 👨‍💻 Autor
+
+**Mário de Araújo Carvalho**
+* Estudante de PhD em Ciência da Computação.
+* Especialista em Visão Computacional, Machine Learning e Deep Active Learning aplicados à Agropecuária de Precisão e Geoprocessamento.
+* Entusiasta do Software Livre.
+* [GitHub Profile](https://github.com/MarioCarvalhoBr)
+* [LinkedIn Profile](https://www.linkedin.com/in/mariodearaujocarvalho/)
