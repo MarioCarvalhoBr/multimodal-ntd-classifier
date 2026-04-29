@@ -8,22 +8,18 @@ import os
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-class ModelTrainer:
+class Trainer:
     """
     Orquestra o ciclo de vida de treinamento, validação e teste.
     Calcula métricas rigorosas para artigos científicos.
     """
-    def __init__(self, model: nn.Module, device: str, learning_rate: float = 1e-3):
-        self.device = torch.device(device)
-        self.model = model.to(self.device)
+    def __init__(self, model, device, lr=1e-3):
+        self.model = model
+        self.device = device
+        self.criterion = torch.nn.CrossEntropyLoss()
+        # Otimizador criado aqui garante que os parâmetros já estejam no device correto
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         self.history = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}
-        
-        # Como é Linear Probing, a Loss padrão é CrossEntropy
-        self.criterion = nn.CrossEntropyLoss()
-        
-        # Otimizador atua APENAS nos parâmetros que requerem gradiente (a camada linear)
-        trainable_params = [p for p in self.model.parameters() if p.requires_grad]
-        self.optimizer = optim.AdamW(trainable_params, lr=learning_rate)
 
     def save_curves(self, model_name):
         output_dir = Path("output/figures")
