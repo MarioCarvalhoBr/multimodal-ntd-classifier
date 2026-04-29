@@ -79,7 +79,7 @@ class NTDDatasetBuilder:
 
 def main():
     # 1. Configurações
-    target_dir = os.getenv("PROCESSED_DATA_DIR", "data/processed/Dataset-NTD-V1")
+    target_dir = os.getenv("PROCESSED_DATA_DIR", "dataset/processed/Dataset-NTD-V1")
     builder = NTDDatasetBuilder(output_dir=target_dir)
     
     # 2. Mapeamento dos Datasets (Handle do Kaggle -> Nome da Classe alvo)

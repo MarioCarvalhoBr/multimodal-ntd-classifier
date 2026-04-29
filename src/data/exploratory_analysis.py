@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from features.preprocessors import HairRemovalFilter
 
 def generate_eda_reports():
-    data_dir = Path("data/processed/Dataset-NTD-V1")
+    data_dir = Path("dataset/processed/Dataset-NTD-V1")
     output_dir = Path("output/figures")
     output_dir.mkdir(parents=True, exist_ok=True)
     
