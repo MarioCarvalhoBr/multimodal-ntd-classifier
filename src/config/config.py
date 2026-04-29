@@ -35,6 +35,7 @@ class Settings(BaseSettings):
         "openai/clip-vit-base-patch16",
         
         # Baselines Tradicionais de Visão
+        "resnet50",                    # Via timm
         "efficientnet_b3",             # Via timm
         "vit_base_patch16_224"         # Via timm
     ]
