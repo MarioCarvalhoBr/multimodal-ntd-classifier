@@ -1,8 +1,15 @@
+import os
+
 import cv2
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from pathlib import Path
+
+# ---> ADICIONE ESTAS DUAS LINHAS <---
+# Desativa o multithreading interno do OpenCV para evitar deadlocks com o DataLoader
+cv2.setNumThreads(0)
+os.environ["OMP_NUM_THREADS"] = "1"
 
 class NTDDataset(Dataset):
     def __init__(self, root_dir, hf_processor, class_filter=None, custom_preprocessor=None):

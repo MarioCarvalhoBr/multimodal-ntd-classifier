@@ -8,7 +8,7 @@ import os
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-class Trainer:
+class ModelTrainer:
     """
     Orquestra o ciclo de vida de treinamento, validação e teste.
     Calcula métricas rigorosas para artigos científicos.
