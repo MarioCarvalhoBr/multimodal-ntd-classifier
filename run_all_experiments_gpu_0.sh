@@ -29,9 +29,9 @@ do
     
     # Define um batch size seguro dependendo se é CNN ou Transformer
     if [[ "$MODEL" == *"efficientnet"* || "$MODEL" == *"resnet"* ]]; then
-        BATCH_SIZE=16  # Mais conservador para CNNs pesadas na memória
+        BATCH_SIZE=64  # Mais conservador para CNNs pesadas na memória
     else
-        BATCH_SIZE=32 # Transformers lidam melhor com batches maiores
+        BATCH_SIZE=128 # Transformers lidam melhor com batches maiores
     fi
 
     # 1. Limpa a GPU rigorosamente antes de cada modelo
