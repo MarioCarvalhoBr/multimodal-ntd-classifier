@@ -119,3 +119,45 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICE
 * Entusiasta do Software Livre.
 * [GitHub Profile](https://github.com/MarioCarvalhoBr)
 * [LinkedIn Profile](https://www.linkedin.com/in/mariodearaujocarvalho/)
+
+
+## 📚 Referências (Datasets)
+
+Se for utilizar as imagens compiladas por este framework, certifique-se de referenciar adequadamente os criadores originais dos datasets:
+```bibtex
+@misc{orvile_leprosy_2023,
+  author = {Orvile},
+  title = {Leprosy Chronic Wound Images (CO2Wounds-V2)},
+  year = {2023},
+  publisher = {Kaggle},
+  howpublished = {\url{[https://www.kaggle.com/datasets/orvile/leprosy-chronic-wound-images-co2wounds-v2](https://www.kaggle.com/datasets/orvile/leprosy-chronic-wound-images-co2wounds-v2)}},
+  note = {Acessado em: 2024}
+}
+
+@misc{ahmedxc4_parasite_2022,
+  author = {Ahmedxc4},
+  title = {Parasite Dataset (Leishmania, Plasmodium, Trypanosome, etc.)},
+  year = {2022},
+  publisher = {Kaggle},
+  howpublished = {\url{[https://www.kaggle.com/datasets/ahmedxc4/parasite-dataset](https://www.kaggle.com/datasets/ahmedxc4/parasite-dataset)}},
+  note = {Acessado em: 2024}
+}
+
+@misc{pereira_chagas_2021,
+  author = {Andr\'{e} Pereira},
+  title = {Trypanosoma cruzi Microscopy Detection Dataset},
+  year = {2021},
+  publisher = {Kaggle},
+  howpublished = {\url{[https://www.kaggle.com/datasets/andrpereira157/trypanosoma-cruzi-microscopy-detection-dataset](https://www.kaggle.com/datasets/andrpereira157/trypanosoma-cruzi-microscopy-detection-dataset)}},
+  note = {Acessado em: 2024}
+}
+
+@misc{mohaliy_katokatz_2023,
+  author = {Mohaliy2016},
+  title = {Kato-Katz STH & S. mansoni Dataset},
+  year = {2023},
+  publisher = {Kaggle},
+  howpublished = {\url{[https://www.kaggle.com/datasets/mohaliy2016/ai4ntd-p1-5v2](https://www.kaggle.com/datasets/mohaliy2016/ai4ntd-p1-5v2)}},
+  note = {Acessado em: 2024}
+}
+```
