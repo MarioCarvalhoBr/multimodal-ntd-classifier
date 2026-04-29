@@ -12,6 +12,9 @@ logs/
 output/results/*
 output/results/
 
+output/results2/*
+output/results2/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

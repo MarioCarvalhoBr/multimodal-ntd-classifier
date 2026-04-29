@@ -1,0 +1,66 @@
+[
+  {
+    "id": "microscopy_parasite_babesia",
+    "name": "Babesia spp. (Babesiose)",
+    "description": "Protozoários intraeritrocitários (que vivem dentro dos glóbulos vermelhos) causadores da babesiose, uma doença clinicamente semelhante à malária. Eles infectam e destroem as hemácias do hospedeiro.",
+    "transmission": "Transmitido pela picada de carrapatos infectados (principalmente do gênero Ixodes). Também pode ocorrer por transfusão de sangue.",
+    "symptoms": "Febre, calafrios, suores intensos, fadiga e anemia hemolítica. Pode ser muito grave em pessoas idosas, imunossuprimidas ou sem baço.",
+    "treatment": "Combinação de antimicrobianos, como atovaquona associada à azitromicina, ou clindamicina com quinino para casos graves."
+  },
+  {
+    "id": "microscopy_parasite_plasmodium",
+    "name": "Plasmodium spp. (Malária)",
+    "description": "O Plasmodium é o gênero de parasitas protozoários responsáveis pela malária. São patógenos intracelulares obrigatórios que infectam e destroem os glóbulos vermelhos do hospedeiro durante seu ciclo reprodutivo.",
+    "transmission": "Transmitido pela picada da fêmea infectada do mosquito do gênero Anopheles.",
+    "symptoms": "Febre alta em ciclos, calafrios, sudorese, dor de cabeça e dores musculares. Casos graves podem levar a anemia severa e complicações neurológicas (malária cerebral).",
+    "treatment": "Terapias combinadas à base de artemisinina (ACTs), cloroquina ou outros antimaláricos, dependendo da espécie do parasita e da resistência local."
+  },
+  {
+    "id": "microscopy_parasite_trichomonad",
+    "name": "Trichomonas vaginalis (Tricomoníase)",
+    "description": "Protozoário flagelado que causa a tricomoníase, uma das infecções sexualmente transmissíveis (ISTs) não virais mais comuns no mundo. Afeta o trato urogenital humano.",
+    "transmission": "Transmitido através do contato sexual desprotegido com uma pessoa infectada.",
+    "symptoms": "Muitas vezes assintomática (especialmente em homens). Nas mulheres, pode causar corrimento abundante, coceira, irritação genital e desconforto ao urinar.",
+    "treatment": "Antiparasitários orais de dose única ou multidoses, como metronidazol ou tinidazol."
+  },
+  {
+    "id": "microscopy_parasite_leishmania",
+    "name": "Leishmania spp. (Leishmaniose)",
+    "description": "Protozoários intracelulares que causam as leishmanioses (visceral, cutânea e mucocutânea). Uma Doença Tropical Negligenciada (NTD) onde o parasita ataca os macrófagos do sistema imunológico.",
+    "transmission": "Transmitido pela picada de mosquitos flebotomíneos infectados (conhecidos popularmente como mosquito-palha ou birigui).",
+    "symptoms": "A forma cutânea causa úlceras de difícil cicatrização na pele. A forma visceral (calazar) afeta órgãos internos como fígado, baço e medula óssea, causando febre prolongada e inchaço abdominal.",
+    "treatment": "Antimoniais pentavalentes, anfotericina B lipossomal ou miltefosina, dependendo da apresentação clínica."
+  },
+  {
+    "id": "microscopy_parasite_trypanosome",
+    "name": "Trypanosoma spp.",
+    "description": "Gênero de protozoários flagelados que inclui espécies causadoras de severas Doenças Tropicais Negligenciadas (NTDs), como a Doença de Chagas (T. cruzi) nas Américas e a Doença do Sono (T. brucei) na África.",
+    "transmission": "T. cruzi é transmitido pelas fezes do inseto triatomíneo (barbeiro). T. brucei é transmitido pela picada da mosca tsé-tsé.",
+    "symptoms": "Na Doença de Chagas aguda: febre, fadiga e inchaço (Sinal de Romaña). Na fase crônica: graves complicações cardíacas e digestivas (megacólon/megaesôfago).",
+    "treatment": "Benzonidazol ou Nifurtimox para a Doença de Chagas (altamente eficazes apenas se administrados na fase aguda recente)."
+  },
+  {
+    "id": "microscopy_parasite_toxoplasma",
+    "name": "Toxoplasma gondii (Toxoplasmose)",
+    "description": "Protozoário intracelular obrigatório causador da toxoplasmose. Tem os felinos (gatos) como hospedeiros definitivos, mas pode infectar quase todos os animais de sangue quente, incluindo humanos.",
+    "transmission": "Ingestão de água ou alimentos contaminados com oocistos (fezes de gatos), consumo de carne mal cozida contendo cistos, ou transmissão congênita (da mãe para o feto).",
+    "symptoms": "Geralmente assintomática em pessoas saudáveis. É altamente perigosa para imunodeprimidos e gestantes (alto risco de aborto ou malformações neurológicas no feto).",
+    "treatment": "A maioria dos adultos saudáveis não necessita de tratamento. Casos severos ou gestantes são tratados com pirimetamina, sulfadiazina e ácido folínico."
+  },
+  {
+    "id": "microscopy_parasite_rbcs",
+    "name": "Hemácias Saudáveis (Controle Negativo)",
+    "description": "Classe de controle do dataset composta por eritrócitos (glóbulos vermelhos) normais. As hemácias são as células sanguíneas responsáveis pelo transporte de oxigênio pelo corpo.",
+    "transmission": "N/A (Célula humana saudável).",
+    "symptoms": "A presença destas células no classificador indica uma amostra de sangue limpa, sem a presença visível de parasitas intraeritrocitários.",
+    "treatment": "N/A. Diagnóstico: Sangue Saudável."
+  },
+  {
+    "id": "microscopy_parasite_leukocyte",
+    "name": "Leucócitos Saudáveis (Controle Negativo)",
+    "description": "Classe de controle do dataset composta por glóbulos brancos normais. Os leucócitos são as células de defesa do sistema imunológico humano, essenciais no combate a infecções.",
+    "transmission": "N/A (Célula humana saudável).",
+    "symptoms": "A detecção correta desta classe significa que a Inteligência Artificial aprendeu a diferenciar o núcleo complexo de uma célula de defesa humana do núcleo de um parasita invasor.",
+    "treatment": "N/A. Diagnóstico: Resposta Imunológica Normal / Sangue Saudável."
+  }
+]

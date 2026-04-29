@@ -8,14 +8,13 @@ export CUDA_LAUNCH_BLOCKING=1
 
 # Lista de modelos (Use as tags exatas do Hugging Face)
 MODELS=(
-    # "google/siglip-base-patch16-224"
-    # "openai/clip-vit-base-patch16"
-    "microsoft/resnet-50"
+    "google/siglip-base-patch16-224"
+    "openai/clip-vit-base-patch16"
 )
 
 # Configurações globais
-CLASSES="microscopy_chagas microscopy_schistosomiasis microscopy_parasites_general"
-EPOCHS=1
+CLASSES="microscopy_parasite_babesia microscopy_parasite_plasmodium microscopy_parasite_trichomonad microscopy_parasite_leishmania microscopy_parasite_rbcs microscopy_parasite_trypanosome microscopy_parasite_leukocyte microscopy_parasite_toxoplasma"
+EPOCHS=10
 NUM_WORKERS=0 # Mantenha 0 para estabilidade
 CUDA_DEVICE=1 # GPU a ser utilizada (0, 1, etc.)
 
@@ -29,9 +28,9 @@ do
     
    # Define um batch size seguro dependendo se é CNN ou Transformer
     if [[ "$MODEL" == *"efficientnet"* || "$MODEL" == *"resnet"* ]]; then
-        BATCH_SIZE=64  # Mais conservador para CNNs pesadas na memória
+        BATCH_SIZE=128  # Mais conservador para CNNs pesadas na memória
     else
-        BATCH_SIZE=128 # Transformers lidam melhor com batches maiores
+        BATCH_SIZE=256 # Transformers lidam melhor com batches maiores
     fi
 
     # 1. Limpa a GPU rigorosamente antes de cada modelo
