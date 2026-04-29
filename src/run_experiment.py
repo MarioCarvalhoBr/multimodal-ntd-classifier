@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--classes", nargs="+", required=True)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--num_workers", type=int, default=4)
+    parser.add_argument("--num_workers", type=int, default=0)
     parser.add_argument("--use_single_gpu", action="store_true", default=True, help="Força o uso de uma única GPU mesmo que múltiplas estejam disponíveis")
     args = parser.parse_args()
     
@@ -29,7 +29,7 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         # Inicializa o contexto CUDA forçadamente na thread principal
-        # torch.cuda.init()
+        #torch.cuda.init()
         print(f"✅ CUDA disponível. Usando GPU: {torch.cuda.get_device_name(0)}")
     # 3. Verificação de Segurança das Classes
     data_dir = Path("dataset/processed/Dataset-NTD-V1")
@@ -44,7 +44,7 @@ def main():
     print(f"✅ Treinando para {len(args.classes)} classes: {args.classes}")
 
     MODELS_TO_TEST = [
-        "efficientnet_b3",
+        # "efficientnet_b3",
         "openai/clip-vit-base-patch16"
     ]
 
@@ -70,8 +70,8 @@ def main():
         val_dataset = NTDDataset(data_dir / "val", processor, args.classes, hair_preprocessor)
 
         # DataLoaders
-        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True)
-        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+        val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
 
         # Treinamento (O ModelTrainer criará o otimizador internamente APÓS o modelo estar no device)
         trainer = ModelTrainer(model, device=str(device))

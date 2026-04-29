@@ -6,23 +6,37 @@ import timm
 class MultimodalLinearProbe(nn.Module):
     def __init__(self, model_name, num_classes, freeze_backbone=True):
         super().__init__()
+        
         # Verifica se é um modelo timm ou HF
         if "efficientnet" in model_name or "vit_base_patch16_224" in model_name:
             self.backbone = timm.create_model(model_name, pretrained=True, num_classes=0)
             self.is_timm = True
-            # Pega a dimensão de saída correta do timm
+            
+            # Descobre o tamanho do vetor de features via dummy pass
             with torch.no_grad():
                 dummy = torch.randn(1, 3, 224, 224)
                 hidden_size = self.backbone(dummy).shape[1]
+                
         else:
             self.backbone = AutoModel.from_pretrained(model_name)
             self.is_timm = False
-            hidden_size = self.backbone.config.vision_config.hidden_size if "clip" in model_name else self.backbone.config.hidden_size
+            
+            # Descobre o tamanho do vetor de features via dummy pass para HF (Bulletproof)
+            with torch.no_grad():
+                dummy_input = torch.randn(1, 3, 224, 224)
+                # Precisamos simular a mesma chamada que acontece no forward
+                if hasattr(self.backbone, "get_image_features"):
+                    out = self.backbone.get_image_features(dummy_input)
+                else:
+                    out = self.backbone(dummy_input).pooler_output
+                hidden_size = out.shape[1]
 
+        # Congela o backbone (Linear Probing)
         if freeze_backbone:
             for param in self.backbone.parameters():
                 param.requires_grad = False
         
+        # Agora hidden_size será o valor exato, resolvendo o erro de matriz!
         self.classifier = nn.Linear(hidden_size, num_classes)
 
     def forward(self, pixel_values):
