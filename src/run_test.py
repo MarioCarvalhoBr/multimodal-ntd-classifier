@@ -14,6 +14,7 @@ from features.preprocessors import HairRemovalFilter
 from utils.logger import logger, log_file
 from config.config import load_config
 
+
 settings = load_config()
 
 def main():
