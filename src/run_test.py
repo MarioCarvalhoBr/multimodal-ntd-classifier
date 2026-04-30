@@ -83,7 +83,7 @@ def main():
             model = torch.nn.DataParallel(model)
 
         # 5. Preprocessor da Fase 1
-        hair_preprocessor = HairRemovalFilter()
+        hair_preprocessor = None #HairRemovalFilter()
 
         # 6. Carregar Dataset de Teste
         test_dataset = NTDDataset(test_dir, processor, args.classes, hair_preprocessor)
@@ -92,7 +92,7 @@ def main():
             batch_size=args.batch_size, 
             shuffle=False, 
             num_workers=args.num_workers, 
-            pin_memory=True
+            pin_memory=False  # Evitar problemas de memória compartilhada em DataLoader com múltiplos processos
         )
 
         # 7. Executar Teste e Reportar
@@ -107,5 +107,5 @@ def main():
             logger.info(f"[+] Log copiado para: {output_dir_log / 'log-test.log'}")
 
 if __name__ == "__main__":
-    mp.set_start_method('spawn', force=True)
+    # mp.set_start_method('spawn', force=True)
     main()
