@@ -15,7 +15,7 @@ MODELS=(
 
 # Configurações globais
 CLASSES="microscopy_parasite_babesia microscopy_parasite_plasmodium microscopy_parasite_trichomonad microscopy_parasite_leishmania microscopy_parasite_rbcs microscopy_parasite_trypanosome microscopy_parasite_leukocyte microscopy_parasite_toxoplasma"
-EPOCHS=10
+EPOCHS=30
 NUM_WORKERS=0 # Mantenha 0 para estabilidade
 CUDA_DEVICE=0 # GPU a ser utilizada (0, 1, etc.)
 
