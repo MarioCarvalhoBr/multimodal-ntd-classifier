@@ -83,6 +83,20 @@ PROCESSED_DATA_DIR="dataset/processed/Dataset-NTD-V1"
 
 ## 🧪 Como Executar a Pipeline
 
+## ▶️ Como Rodar o Projeto (Backend + Frontend)
+
+Abra dois terminais na raiz do projeto e execute:
+
+### Backend (API)
+```bash
+poetry run uvicorn src.server.server:app --reload
+```
+
+### Frontend (UI)
+```bash
+python -m http.server 8080
+```
+
 ### Fase 1: Coleta e Engenharia de Dados
 Este script baixa os datasets de Doenças Tropicais Negligenciadas, realiza o *Stratified Split* (70% Treino / 15% Validação / 15% Teste) e organiza as imagens no formato `ImageFolder`.
 
