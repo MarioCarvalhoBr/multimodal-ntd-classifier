@@ -11,6 +11,7 @@ logs/*
 logs/
 output/results/*
 output/results/
+data.zip
 
 output/results2/*
 output/results2/
