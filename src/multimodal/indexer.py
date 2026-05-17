@@ -21,10 +21,10 @@ def get_collection_name(model_name: str) -> str:
 
 def _load_backbone(model_name: str, device: str):
     if "clip" in model_name.lower():
-        model = CLIPModel.from_pretrained(model_name).to(device)
+        model = CLIPModel.from_pretrained(model_name, use_safetensors=True).to(device)
         processor = CLIPProcessor.from_pretrained(model_name)
     else:
-        model = AutoModel.from_pretrained(model_name).to(device)
+        model = AutoModel.from_pretrained(model_name, use_safetensors=True).to(device)
         processor = AutoProcessor.from_pretrained(model_name)
     model.eval()
     return model, processor

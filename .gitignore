@@ -1,6 +1,7 @@
 # Local data
 CLAUDE.md
 MY_BOARD.md
+output/multimodal_vector_db/
 dataset/*
 dataset/
 dataset2/*
