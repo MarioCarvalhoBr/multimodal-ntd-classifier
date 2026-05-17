@@ -1,10 +1,27 @@
 import json
 import matplotlib.pyplot as plt
 from pathlib import Path
+# Arg parser
+import argparse
+
+parser = argparse.ArgumentParser(description="Generate convergence plots for training experiments.")
+parser.add_argument("--results_dir", type=str, default="output/results", help="Directory containing the results.")
+parser.add_argument("--split", type=str, default="val", choices=["train", "val"], help="Split to plot.")
 
 def plot_training_convergence():
-    results_dir = Path("output/results")
+    args = parser.parse_args()
+    results_dir = Path(args.results_dir)
     models_data = {}
+    
+    print(f"[*] Configurações:")
+    print(f"    - Diretório de Resultados: {results_dir}")
+    print(f"    - Split para Plotagem: {args.split}")
+    
+    title_map = {
+        "train": "Training",
+        "val": "Validation"
+    }
+    print(f"[*] Gerando gráficos de convergência para: {title_map[args.split]}")
 
     print("[*] Lendo arquivos history.json...")
     for model_dir in results_dir.iterdir():
@@ -27,22 +44,22 @@ def plot_training_convergence():
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
     
     for (label, history), color in zip(models_data.items(), colors):
-        epochs = range(1, len(history["val_loss"]) + 1)
+        epochs = range(1, len(history[f"{args.split}_loss"]) + 1)
         
-        # Gráfico 1: Val Loss
-        ax1.plot(epochs, history["val_loss"], label=label, marker='o', markersize=4, linewidth=1.5, color=color)
+        # Gráfico 1: Loss
+        ax1.plot(epochs, history[f"{args.split}_loss"], label=label, marker='o', markersize=4, linewidth=1.5, color=color)
         
-        # Gráfico 2: Val Accuracy
-        ax2.plot(epochs, history["val_acc"], label=label, marker='s', markersize=4, linewidth=1.5, color=color)
+        # Gráfico 2: Accuracy
+        ax2.plot(epochs, history[f"{args.split}_acc"], label=label, marker='s', markersize=4, linewidth=1.5, color=color)
 
     # Ajustes finos de layout
-    ax1.set_title('Validation Loss Convergence', fontsize=14, weight='bold')
+    ax1.set_title(f'{title_map[args.split]} Loss Convergence', fontsize=14, weight='bold')
     ax1.set_xlabel('Epochs', fontsize=12)
     ax1.set_ylabel('Loss (Cross-Entropy)', fontsize=12)
     ax1.grid(True, linestyle='--', alpha=0.7)
     ax1.legend()
 
-    ax2.set_title('Validation Accuracy Progress', fontsize=14, weight='bold')
+    ax2.set_title(f'{title_map[args.split]} Accuracy Progress', fontsize=14, weight='bold')
     ax2.set_xlabel('Epochs', fontsize=12)
     ax2.set_ylabel('Accuracy (%)', fontsize=12)
     ax2.grid(True, linestyle='--', alpha=0.7)
@@ -51,8 +68,8 @@ def plot_training_convergence():
     plt.tight_layout()
     
     # Salva os gráficos consolidados
-    output_pdf = results_dir / "models_convergence_comparison.pdf"
-    output_png = results_dir / "models_convergence_comparison.png"
+    output_pdf = results_dir / f"{title_map[args.split]}_Convergence_Plots.pdf"
+    output_png = results_dir / f"{title_map[args.split]}_Convergence_Plots.png"
     plt.savefig(output_pdf, bbox_inches='tight')
     plt.savefig(output_png, bbox_inches='tight', dpi=300)
     plt.show()
