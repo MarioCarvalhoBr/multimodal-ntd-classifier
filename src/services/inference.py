@@ -22,7 +22,8 @@ ALLOWED_MODELS = [
     "google/siglip-base-patch16-224"
 ]
 
-CLASSES = [
+# Must be sorted: NTDDataset assigns label IDs in alphabetical order
+CLASSES = sorted([
     "microscopy_parasite_babesia",
     "microscopy_parasite_plasmodium",
     "microscopy_parasite_trichomonad",
@@ -30,8 +31,8 @@ CLASSES = [
     "microscopy_parasite_rbcs",
     "microscopy_parasite_trypanosome",
     "microscopy_parasite_leukocyte",
-    "microscopy_parasite_toxoplasma"
-]
+    "microscopy_parasite_toxoplasma",
+])
 
 
 @lru_cache(maxsize=3)

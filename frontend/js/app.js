@@ -10,45 +10,50 @@ createApp({
                 "google/efficientnet-b3",
                 "google/vit-base-patch16-224",
                 "openai/clip-vit-base-patch16",
-                "google/siglip-base-patch16-224"
+                "google/siglip-base-patch16-224",
             ],
             selectedModel: "microsoft/resnet-50",
             isLoading: false,
             predictions: [],
-            diseaseDatabase: [],
             showDiseaseModal: false,
             showAbout: false,
             selectedDiseaseInfo: null,
-            // Certifique-se de que a porta aqui seja a mesma do settings.api_port
-            apiUrl: "http://127.0.0.1:8000" 
-        }
+            apiUrl: "http://127.0.0.1:8000",
+
+            // i18n
+            currentLang: localStorage.getItem('cadtn_lang') || 'en',
+            supportedLangs: SUPPORTED_LANGS,
+        };
     },
-    mounted() {
-        fetch('./data/parasite.json')
-            .then(response => response.json())
-            .then(data => {
-                this.diseaseDatabase = data;
-                console.log("Banco de dados médico carregado:", this.diseaseDatabase.length, "doenças.");
-            })
-            .catch(error => console.error("Erro ao carregar parasite.json:", error));
-    },
+
     methods: {
-        handleFileUpload(event) {
-            const selectedFile = event.target.files[0];
-            if (!selectedFile) return;
-            
-            this.file = selectedFile;
-            this.predictions = []; 
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.imagePreview = e.target.result;
-            };
-            reader.readAsDataURL(selectedFile);
+        // ── i18n ────────────────────────────────────────────────────────────
+        t(key) {
+            return t(this.currentLang, key);
         },
+        setLang(code) {
+            this.currentLang = code;
+            localStorage.setItem('cadtn_lang', code);
+            document.documentElement.lang = code;
+        },
+        getDiseaseInfo(classId) {
+            return getDiseaseTranslation(this.currentLang, classId);
+        },
+
+        // ── Upload ───────────────────────────────────────────────────────────
+        handleFileUpload(event) {
+            const selected = event.target.files[0];
+            if (!selected) return;
+            this.file = selected;
+            this.predictions = [];
+            const reader = new FileReader();
+            reader.onload = (e) => { this.imagePreview = e.target.result; };
+            reader.readAsDataURL(selected);
+        },
+
+        // ── Inference ────────────────────────────────────────────────────────
         async submitAnalysis() {
             if (!this.file) return;
-
             this.isLoading = true;
             this.predictions = [];
 
@@ -59,36 +64,33 @@ createApp({
             try {
                 const response = await fetch(`${this.apiUrl}/predict`, {
                     method: "POST",
-                    body: formData
+                    body: formData,
                 });
-
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 this.predictions = data.predictions;
             } catch (error) {
-                console.error("Erro na API:", error);
-                alert("Erro ao conectar com o servidor. Verifique se o FastAPI está rodando.");
+                console.error("API error:", error);
+                alert("Could not connect to the server. Make sure the FastAPI backend is running.");
             } finally {
                 this.isLoading = false;
             }
         },
+
+        // ── Helpers ──────────────────────────────────────────────────────────
         formatClassName(rawName) {
-            let name = rawName.replace('microscopy_parasite_', '')
-                              .replace('clinical_', '')
-                              .replace('microscopy_', '');
-            return name.charAt(0).toUpperCase() + name.slice(1);
-        },
-        getDiseaseInfo(classId) {
-            return this.diseaseDatabase.find(d => d.id === classId);
+            const info = this.getDiseaseInfo(rawName);
+            if (info) return info.name;
+            // Fallback: strip prefix and capitalise
+            return rawName
+                .replace('microscopy_parasite_', '')
+                .replace('clinical_', '')
+                .replace('microscopy_', '')
+                .replace(/\b\w/g, c => c.toUpperCase());
         },
         openDiseaseModal(classId) {
             this.selectedDiseaseInfo = this.getDiseaseInfo(classId);
-            if (this.selectedDiseaseInfo) {
-                this.showDiseaseModal = true;
-            }
-        }
-    }
+            if (this.selectedDiseaseInfo) this.showDiseaseModal = true;
+        },
+    },
 }).mount('#app');
