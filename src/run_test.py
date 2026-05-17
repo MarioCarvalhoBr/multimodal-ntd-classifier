@@ -68,13 +68,16 @@ def main():
             logger.info(f"⚠️ AVISO: Pesos não encontrados em {saved_model_path}. Pule este modelo ou treine-o primeiro.")
             continue
 
+        # NTDDataset always sorts class_filter; target_names must match that order
+        classes = sorted(args.classes)
+
         # 4. Criar o modelo utilizando a nova Factory
-        model, processor = ModelFactory.create(model_name, num_classes=len(args.classes))
-        
+        model, processor = ModelFactory.create(model_name, num_classes=len(classes))
+
         # Carregar os pesos treinados
         model.load_state_dict(torch.load(saved_model_path, map_location=device))
         logger.info(f"[+] Pesos carregados com sucesso: {saved_model_path}")
-        
+
         # Mover para a GPU
         model = model.to(device)
 
@@ -86,18 +89,18 @@ def main():
         hair_preprocessor = None #HairRemovalFilter()
 
         # 6. Carregar Dataset de Teste
-        test_dataset = NTDDataset(test_dir, processor, args.classes, hair_preprocessor)
+        test_dataset = NTDDataset(test_dir, processor, classes, hair_preprocessor)
         test_loader = DataLoader(
-            test_dataset, 
-            batch_size=args.batch_size, 
-            shuffle=False, 
-            num_workers=args.num_workers, 
+            test_dataset,
+            batch_size=args.batch_size,
+            shuffle=False,
+            num_workers=args.num_workers,
             pin_memory=False  # Evitar problemas de memória compartilhada em DataLoader com múltiplos processos
         )
 
         # 7. Executar Teste e Reportar
         trainer = Trainer(model, device=str(device))
-        trainer.test_and_report(test_loader, target_names=args.classes, model_name=model_name)
+        trainer.test_and_report(test_loader, target_names=classes, model_name=model_name)
         logger.info(f"[*] Avaliação de teste concluída para: {model_name}")
         
         output_dir_log = Path(f"output/results/{model_tag}")

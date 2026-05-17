@@ -262,7 +262,8 @@ bash run_one_test_multimodal_gpu_0.sh  # multimodal test on GPU 0
 # Terminal 1 — API
 poetry run uvicorn src.server.server:app --reload   # port 8000
 
-# Terminal 2 — UI
+# Terminal 2 — UI: Into the frontend/ directory and serve it
+cd frontend/
 python -m http.server 8080                          # serves frontend/
 ```
 

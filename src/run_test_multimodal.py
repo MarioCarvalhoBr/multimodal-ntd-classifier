@@ -180,6 +180,9 @@ def main() -> None:
         logger.info("\n" + "=" * 60)
         logger.info(f"[*] TESTE MULTIMODAL: {model_name}")
 
+        # NTDDataset always sorts class_filter; target_names must match that order
+        classes = sorted(args.classes)
+
         # --- Indexing phase (optional) ---
         if args.build_index:
             build_index(model_name, force=args.force_reindex)
@@ -196,8 +199,8 @@ def main() -> None:
 
         predictor = MultimodalPredictor(
             model_name=model_name,
-            num_classes=len(args.classes),
-            classes=args.classes,
+            num_classes=len(classes),
+            classes=classes,
             device=str(device),
         )
 
@@ -205,7 +208,7 @@ def main() -> None:
         test_dataset = NTDDataset(
             test_dir,
             predictor.processor,
-            args.classes,
+            classes,
             custom_preprocessor=None,
         )
         test_loader = DataLoader(
@@ -235,7 +238,7 @@ def main() -> None:
         predictor.close()
 
         # --- Reports ---
-        _save_report(all_preds, all_labels, all_paths, args.classes, model_name)
+        _save_report(all_preds, all_labels, all_paths, classes, model_name)
 
         log_out = Path(f"output/results/multimodal_{model_tag}")
         log_out.mkdir(parents=True, exist_ok=True)
