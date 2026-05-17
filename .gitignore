@@ -1,4 +1,6 @@
 # Local data
+CLAUDE.md
+MY_BOARD.md
 dataset/*
 dataset/
 dataset2/*
@@ -237,3 +239,4 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 models/saved/
+CLAUDE.md
