@@ -1,225 +1,317 @@
-# Multimodal Vision-Language for Image Classification of Neglected Tropical Diseases
+# Multimodal Vision-Language Classifier for Neglected Tropical Diseases
 
-![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c)
+![Python](https://img.shields.io/badge/python-3.12%2B-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.2-ee4c2c)
 ![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Transformers-ffcc00)
-![Poetry](https://img.shields.io/badge/Poetry-Package%20Manager-cyan)
+![Qdrant](https://img.shields.io/badge/VectorDB-Qdrant-red)
+![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Uma Prova de Conceito (PoC) para triagem e classificação de Doenças Tropicais Negligenciadas (DTNs) utilizando modelos Vision-Language (VLMs) de estado da arte, como CLIP e SigLIP. 
-
-Projeto desenvolvido e submetido como pesquisa para o **I Workshop de Computação Aplicada às Doenças Tropicais Negligenciadas (CADTN)**.
+A research proof-of-concept benchmarking frozen Vision-Language Model (VLM) and CNN backbones via **linear probing** for microscopy image classification of parasites that cause Neglected Tropical Diseases (NTDs). Includes a **multimodal late-fusion** pipeline combining a fine-tuned linear probe with a Qdrant vector database for image and text retrieval. Developed and submitted to the **I Workshop de Computação Aplicada às Doenças Tropicais Negligenciadas (CADTN)**. See more details in the [website](https://cadtn.dotlabbrazil.com.br/).
 
 ---
 
-## 📖 Visão Geral
+## Screenshots
 
-Este projeto propõe um **Framework Unificado de Triagem Multimodal** desenhado para operar em ambientes com recursos limitados, como o Sistema Único de Saúde (SUS) do Brasil. 
+| | |
+|---|---|
+| ![Figure 1](assets/FIGURE_01.png) | ![Figure 2](assets/FIGURE_02.png) |
+| ![Figure 3](assets/FIGURE_03.png) | ![Figure 4](assets/FIGURE_04.png) |
 
-Devido à heterogeneidade dos dados médicos de DTNs, a arquitetura foi desenhada para lidar com duas ramificações de entrada:
-1. **Imagens Clínicas Macroscópicas:** (ex: Lesões de Hanseníase). Utiliza pré-processamento avançado (Filtro Morfológico Black-Hat + Inpainting TELEA) para remoção de artefatos visuais (pelos).
-2. **Imagens de Microscopia Laboratorial:** (ex: Doença de Chagas, Esquistossomose, Parasitas). Passagem direta para extração de features para preservar as estruturas celulares (caudas, flagelos).
+---
 
-A classificação é realizada através de **Linear Probing** sobre os *backbones* congelados dos modelos multimodais, garantindo baixo custo computacional e preservando o conhecimento semântico-visual dos modelos pré-treinados.
+## Overview
 
-## 🗂 Estrutura do Projeto
+The pipeline classifies microscopy images of eight parasite classes from a single unified dataset. All backbones are **frozen** — only a small linear head on top is trained (linear probing), keeping computational cost low for deployment in resource-constrained settings such as Brazil's SUS.
 
-O código foi construído seguindo os princípios **SOLID** e padrões de **Clean Code**.
+A second evaluation mode adds **multimodal late fusion**: the trained model's softmax output is combined with cosine-similarity scores retrieved from a Qdrant vector database indexed with class images and textual descriptions, using CLIP or SigLIP as the shared embedding backbone.
 
-```text
-multimodal-ntd-classifier/
-├── data/
-│   ├── raw/                 # Cache de download do Kaggle
-│   └── processed/           # Dataset unificado e estratificado (Train/Val/Test)
-├── output/
-│   └── figures/             # Gráficos e PDFs da análise exploratória
-├── src/
-│   ├── data/
-│   │   ├── dataset.py       # PyTorch Dataset customizado
-│   │   ├── make_dataset.py  # Coleta, unificação e split dos dados
-│   │   └── exploratory_analysis.py # Geração de gráficos e EDA
-│   ├── features/
-│   │   └── preprocessors.py # Filtros morfológicos e inpainting
-│   ├── models/
-│   │   ├── classifier.py    # Factory Pattern e Linear Probing (CLIP/SigLIP)
-│   │   ├── trainer.py       # Loop de treinamento e métricas
-│   └── run_experiment.py    # Orquestrador de testes dos modelos
-├── .env.example             # Template de configuração de ambiente
-├── pyproject.toml           # Dependências do Poetry
-└── README.md                # Documentação do projeto
+---
+
+## Architecture
+
+### Design Patterns
+
+| Pattern | Where | Purpose |
+|---|---|---|
+| **Factory** | `src/models/factory.py` | Single entry point `ModelFactory.create(name, num_classes)` for all models |
+| **Strategy** | `src/features/preprocessors.py` | Pluggable preprocessing; `HairRemovalFilter` for clinical images |
+| **Template Method** | `src/models/nets/base.py` | `BaseModel` handles backbone freezing; subclasses define the head |
+
+### Module Map
+
+| Path | Responsibility |
+|---|---|
+| `src/run_experiment.py` | CLI: parse args → dataset → model → training loop |
+| `src/run_test.py` | Load checkpoint → compute test metrics + confusion matrix |
+| `src/run_test_multimodal.py` | Multimodal late-fusion evaluation (linear probe + VectorDB) |
+| `src/models/factory.py` | `ModelFactory` registry |
+| `src/models/trainer.py` | Training loop, early stopping (best val loss), curve export |
+| `src/data/dataset.py` | `NTDDataset` — `__getitem__` returns `(pixel_values, label, path)` |
+| `src/data/make_dataset.py` | Kaggle download, stratified 70/15/15 split |
+| `src/features/preprocessors.py` | `HairRemovalFilter` (Black-Hat morphology + TELEA inpainting) |
+| `src/multimodal/config.py` | Multimodal constants: paths, weights, allowed models |
+| `src/multimodal/indexer.py` | Build Qdrant index from `vector_base/` images and texts |
+| `src/multimodal/predictor.py` | `MultimodalPredictor` — late-fusion inference |
+| `src/server/server.py` | FastAPI application with CORS |
+| `src/api/router.py` | `/predict` REST endpoint (image upload) |
+| `src/services/inference.py` | `get_model()` (LRU cache), `run_inference()` |
+| `src/config/config.py` | Pydantic `BaseSettings`; `ALLOWED_MODELS` gates the API |
+| `src/utils/logger.py` | `setup_logger()` — structured logging to file + console |
+| `src/generate_convergence_plots.py` | Convergence plots from all `history.json` files |
+| `src/generate_table_results.py` | Summary table across all evaluated models |
+
+### Output Layout
+
+```
+output/
+  results/{model_tag}/
+    saved_model/best_{model_tag}.pth   # best checkpoint (val loss)
+    history.json                        # per-epoch metrics
+    loss_curve.pdf
+    accuracy_curve.pdf
+    log-train.log
+    test_report/
+      test_report.txt / .json
+      test_predictions.csv
+      confusion_matrix.pdf / .png
+  results/multimodal_{model_tag}/      # late-fusion results
+    test_report/  (same structure)
+  multimodal_vector_db/                # Qdrant persistent storage
+  figures/                             # EDA PDFs
+logs/                                  # timestamped run logs
 ```
 
 ---
 
-## 🚀 Como Configurar o Ambiente
+## Dataset
 
-O projeto utiliza o gerenciador de pacotes [Poetry](https://python-poetry.org/) para garantir reprodutibilidade estrita no Ubuntu 24.04 (ou ambientes compatíveis).
+A single unified microscopy parasite dataset with **8 classes**, stratified-split 70 / 15 / 15 (train / val / test):
 
-### 1. Clonar o Repositório
+| Class | Train | Test |
+|---|---|---|
+| `microscopy_parasite_babesia` | 821 | 166 |
+| `microscopy_parasite_leishmania` | 1 890 | 396 |
+| `microscopy_parasite_leukocyte` | 963 | 197 |
+| `microscopy_parasite_plasmodium` | 590 | 117 |
+| `microscopy_parasite_rbcs` | 6 296 | 1 340 |
+| `microscopy_parasite_toxoplasma` | 4 683 | 994 |
+| `microscopy_parasite_trichomonad` | 7 093 | 1 511 |
+| `microscopy_parasite_trypanosome` | 1 669 | 348 |
+
+Source: [Parasite Dataset — Kaggle](https://www.kaggle.com/datasets/ahmedxc4/parasite-dataset)
+
+---
+
+## Model Registry
+
+All models are registered in `src/models/factory.py`. Supported values for `--nets`:
+
+| Model ID | Type | Embedding dim |
+|---|---|---|
+| `openai/clip-vit-base-patch16` | VLM | 512 |
+| `openai/clip-vit-base-patch32` | VLM | 512 |
+| `openai/clip-vit-large-patch14` | VLM | 768 |
+| `google/siglip-base-patch16-224` | VLM | 768 |
+| `google/vit-base-patch16-224` | ViT | 768 |
+| `microsoft/resnet-50` | CNN | 2 048 |
+| `google/efficientnet-b3` | CNN | 1 536 |
+
+Only `openai/clip-vit-base-patch16` and `google/siglip-base-patch16-224` are supported for multimodal late fusion.
+
+---
+
+## Multimodal Late Fusion
+
+`run_test_multimodal.py` combines three independent signals per image:
+
+```
+Final score = 0.5 × linear_probe_softmax
+            + 0.3 × cosine_similarity_to_indexed_images (VectorDB)
+            + 0.2 × cosine_similarity_to_indexed_texts  (VectorDB)
+```
+
+The Qdrant vector database is built from a knowledge base at `dataset/processed/Dataset-NTD-V1/vector_base/` with the following structure per class:
+
+```
+vector_base/
+  {class_name}/
+    IMAGEM/          ← reference images (indexed as image embeddings)
+      img1.jpg
+      ...
+    informações.txt  ← textual class description (indexed as text embedding)
+```
+
+CLIP and SigLIP share the same embedding space for images and text, which makes cross-modal cosine search meaningful without any additional training.
+
+---
+
+## Setup
+
+### Prerequisites
+
+- Python 3.12+
+- [Poetry](https://python-poetry.org/)
+- CUDA 12.x (optional, CPU fallback available)
+- Kaggle account with API token
+
+### Install
+
 ```bash
 git clone https://github.com/MarioCarvalhoBr/multimodal-ntd-classifier.git
 cd multimodal-ntd-classifier
-```
-
-### 2. Instalar Dependências
-Certifique-se de ter o Poetry instalado no seu sistema. Em seguida, instale as dependências:
-```bash
 poetry install
 ```
 
-### 3. Configurar Credenciais do Kaggle
-O download dos datasets é automatizado via `kagglehub`. Para isso:
-1. Acesse o [Kaggle](https://www.kaggle.com/), vá em *Settings* e clique em **Create New Token**.
-2. Abra o arquivo `kaggle.json` baixado.
-3. Crie um arquivo chamado `.env` na raiz do projeto e insira suas credenciais:
+### Environment variables
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
 
 ```env
-KAGGLE_USERNAME="seu_usuario_aqui"
-KAGGLE_KEY="sua_chave_longa_aqui"
+KAGGLE_USERNAME="your_username"
+KAGGLE_KEY="your_api_key"
 PROCESSED_DATA_DIR="dataset/processed/Dataset-NTD-V1"
 ```
 
 ---
 
-## 🧪 Como Executar a Pipeline
+## Usage
 
-## ▶️ Como Rodar o Projeto (Backend + Frontend)
-
-Abra dois terminais na raiz do projeto e execute:
-
-### Backend (API)
-```bash
-poetry run uvicorn src.server.server:app --reload
-```
-
-### Frontend (UI)
-```bash
-python -m http.server 8080
-```
-
-### Fase 1: Coleta e Engenharia de Dados
-Este script baixa os datasets de Doenças Tropicais Negligenciadas, realiza o *Stratified Split* (70% Treino / 15% Validação / 15% Teste) e organiza as imagens no formato `ImageFolder`.
+### 1. Download and split the dataset
 
 ```bash
 poetry run python src/data/make_dataset.py
 ```
 
-### Fase 2: Análise Exploratória (EDA)
-Antes do treino, gere os relatórios visuais para avaliar o balanceamento das classes e validar o pré-processamento. Os arquivos serão salvos em `output/figures/` no formato PDF de alta resolução para inclusão em publicações científicas.
+Produces `dataset/processed/Dataset-NTD-V1/{train,val,test}/{class}/`.
+
+### 2. Exploratory data analysis
 
 ```bash
 poetry run python src/data/exploratory_analysis.py
 ```
-**Gráficos Gerados:**
-* `class_distribution_bars.pdf`: Frequência por classe em cada partição (Train/Val/Test).
-* `class_distribution_pie.pdf`: Proporção geral das classes no dataset.
-* `split_density_violin.pdf`: Distribuição de densidade da quantidade de arquivos.
-* `hair_removal_demo.pdf`: Demonstrativo de 10 casos (Antes vs. Depois) da remoção de pelos.
 
-### Fase 3: Treinamento e Avaliação (Linear Probing)
-Este orquestrador inicializa os modelos (SigLIP e variações do CLIP), aplica a remoção de pelos apenas para as imagens clínicas (Hanseníase) e executa o *Linear Probing*. O melhor modelo (com base no *validation loss*) é salvo e avaliado contra o conjunto de teste.
+Saves PDFs to `output/figures/`.
+
+### 3. Train a model
 
 ```bash
-poetry run python src/run_experiment.py
+poetry run python src/run_experiment.py \
+  --classes microscopy_parasite_babesia microscopy_parasite_plasmodium \
+            microscopy_parasite_trichomonad microscopy_parasite_leishmania \
+            microscopy_parasite_rbcs microscopy_parasite_trypanosome \
+            microscopy_parasite_leukocyte microscopy_parasite_toxoplasma \
+  --nets openai/clip-vit-base-patch16 google/siglip-base-patch16-224 \
+  --epochs 30 --batch_size 128
+```
+
+### 4. Evaluate on the test set (standard)
+
+```bash
+poetry run python src/run_test.py \
+  --classes microscopy_parasite_babesia ... \
+  --nets openai/clip-vit-base-patch16 google/siglip-base-patch16-224 \
+  --batch_size 128
+```
+
+### 5. Evaluate with multimodal late fusion
+
+Build the vector index on the first run, then reuse it:
+
+```bash
+# First run — builds the Qdrant index from vector_base/
+poetry run python src/run_test_multimodal.py \
+  --classes microscopy_parasite_babesia ... \
+  --nets openai/clip-vit-base-patch16 google/siglip-base-patch16-224 \
+  --build-index
+
+# Subsequent runs (index already exists)
+poetry run python src/run_test_multimodal.py \
+  --classes microscopy_parasite_babesia ... \
+  --nets openai/clip-vit-base-patch16
+
+# Force index rebuild
+poetry run python src/run_test_multimodal.py ... --build-index --force-reindex
+```
+
+Reports are saved to `output/results/multimodal_{model_tag}/test_report/`.
+
+### 6. Aggregate results
+
+```bash
+poetry run python src/generate_convergence_plots.py
+poetry run python src/generate_table_results.py
+```
+
+### 7. Shell scripts (GPU runs)
+
+```bash
+bash run_all_experiments_gpu_0.sh   # train + test all CNN/ViT models on GPU 0
+bash run_one_experiment_gpu_0.sh    # single model on GPU 0
+bash run_one_test_gpu_0.sh          # test only on GPU 0
+bash run_one_test_multimodal_gpu_0.sh  # multimodal test on GPU 0
+```
+
+### 8. Backend API + Frontend
+
+```bash
+# Terminal 1 — API
+poetry run uvicorn src.server.server:app --reload   # port 8000
+
+# Terminal 2 — UI
+python -m http.server 8080                          # serves frontend/
+```
+
+The `/predict` endpoint accepts an image upload and returns top-K class scores.
+
+### Check GPU availability
+
+```bash
+poetry run python src/gpu_available.py
 ```
 
 ---
 
-## 🤖 Métodos: Vision-Language Models (VLM)
+## Adding a New Model
 
-Esta pesquisa utiliza a técnica de **Linear Probing** sobre modelos multimodais pré-treinados. Diferente das CNNs tradicionais, os VLMs alinham espaços vetoriais de visão e linguagem, permitindo uma generalização superior em domínios médicos com poucos dados rotulados.
-
-### Arquiteturas Avaliadas
-
-| Modelo (Hugging Face) | Dimensão | Vantagens Metodológicas |
-| :--- | :---: | :--- |
-| `google/siglip-base-patch16-224` | 768 | Utiliza a loss *Sigmoid* para aprendizado imagem-texto, apresentando o estado da arte em eficiência e compreensão semântica. |
-| `openai/clip-vit-base-patch32` | 512 | Alta eficiência computacional, ideal para dispositivos móveis em missões de triagem em campo (SUS). |
-| `openai/clip-vit-base-patch16` | 512 | Equilíbrio entre performance e detalhamento visual (patches de 16x16), capturando texturas finas em microscopia. |
-| `openai/clip-vit-large-patch14` | 768 | Máxima capacidade de extração de atributos globais e locais, servindo como teto de performance do experimento. |
-
-### Estratégia de Transfer Learning: Linear Probing
-
-Para garantir uma comparação justa e baixo custo computacional, adotamos o seguinte pipeline:
-1. **Backbone Freeze:** Os pesos dos Vision Transformers (ViT) dos modelos CLIP/SigLIP são congelados para preservar o conhecimento prévio.
-2. **Feature Extraction:** O modelo extrai um vetor (pooled output) que representa as características patológicas da imagem.
-3. **Linear Head:** Uma camada linear customizada é treinada para mapear essas características para as classes de Doenças Tropicais Negligenciadas (DTNs).
+1. Create `src/models/nets/your_model.py` extending `BaseModel`.
+2. Register it in `src/models/factory.py` under its HuggingFace model ID.
+3. Add the ID to `ALLOWED_MODELS` in `src/config/config.py` to expose it via the API.
 
 ---
 
-## 📝 Citação e Licença
-Se utilizar este código em sua pesquisa, por favor, cite nosso trabalho submetido ao I CADTN.
+## Citation
 
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+If you use this code in your research, please cite our work submitted to I CADTN:
 
-## 👨‍💻 Autor
-
-**Mário de Araújo Carvalho**
-* Estudante de PhD em Ciência da Computação.
-* Especialista em Visão Computacional, Machine Learning e Deep Active Learning aplicados à Agropecuária de Precisão e Geoprocessamento.
-* Entusiasta do Software Livre.
-* [GitHub Profile](https://github.com/MarioCarvalhoBr)
-* [LinkedIn Profile](https://www.linkedin.com/in/mariodearaujocarvalho/)
-
-
-## 📚 Referências
-
-### Datasets
+Repository citation in BibTeX format:
 ```bibtex
-@misc{orvile_leprosy_2023,
-  author = {Orvile},
-  title = {Leprosy Chronic Wound Images (CO2Wounds-V2)},
-  year = {2023},
-  publisher = {Kaggle},
-  howpublished = {\url{https://www.kaggle.com/datasets/orvile/leprosy-chronic-wound-images-co2wounds-v2}},
-  note = {Acessado em: 2024}
+@misc{carvalho2026ntdclassifier,
+  author  = {Mário de Araújo Carvalho, Allison Oliveira Miranda, Celso Soares Costa, Wesley Nunes Gonçalves},
+  title   = {Multimodal Vision-Language Classifier for Neglected Tropical Diseases},
+  year    = {2026},
+  url     = {https://github.com/MarioCarvalhoBr/multimodal-ntd-classifier}
 }
-
-@misc{ahmedxc4_parasite_2022,
-  author = {Ahmedxc4},
-  title = {Parasite Dataset (Leishmania, Plasmodium, Trypanosome, etc.)},
-  year = {2022},
-  publisher = {Kaggle},
-  howpublished = {\url{https://www.kaggle.com/datasets/ahmedxc4/parasite-dataset}},
-  note = {Acessado em: 2024}
-}
-
-@misc{pereira_chagas_2021,
-  author = {Andr\'{e} Pereira},
-  title = {Trypanosoma cruzi Microscopy Detection Dataset},
-  year = {2021},
-  publisher = {Kaggle},
-  howpublished = {\url{https://www.kaggle.com/datasets/andrpereira157/trypanosoma-cruzi-microscopy-detection-dataset}},
-  note = {Acessado em: 2024}
-}
-
-@misc{mohaliy_katokatz_2023,
-  author = {Mohaliy2016},
-  title = {Kato-Katz STH & S. mansoni Dataset},
-  year = {2023},
-  publisher = {Kaggle},
-  howpublished = {\url{https://www.kaggle.com/datasets/mohaliy2016/ai4ntd-p1-5v2}},
-  note = {Acessado em: 2024}
+```
+Papper citation in BibTeX format:
+```bibtex
+@misc{carvalho2026papercadtn,
+  author  = {Mário de Araújo Carvalho, Allison Oliveira Miranda, Celso Soares Costa, Wesley Nunes Gonçalves},
+  title   = {Multimodal Artificial Intelligence for Aided Diagnosis of Neglected Tropical Diseases: A Comparative Study of Visual Architectures},
+  year    = {2026},
+  url     = {https://github.com/MarioCarvalhoBr/multimodal-ntd-classifier}
 }
 ```
 
-### Vision-Language Models (VLM)
-```bibtex
-@misc{radford2021learning,
-  title={Learning Transferable Visual Models From Natural Language Supervision}, 
-  author={Alec Radford and Jong Wook Kim and Chris Hallacy and others},
-  year={2021},
-  eprint={2103.00020},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV}
-}
+## License
 
-@misc{zhai2023sigmoid,
-  title={Sigmoid Loss for Language-Image Pre-training}, 
-  author={Xiaohua Zhai and Basil Mustafa and Alexander Kolesnikov and Lucas Beyer},
-  year={2023},
-  eprint={2303.15343},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV}
-}
-```
+This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+
+## Author
+
+**Mário de Araújo Carvalho** — PhD student in Computer Science, specialist in Computer Vision and Deep Learning.  
+[GitHub](https://github.com/MarioCarvalhoBr) · [LinkedIn](https://www.linkedin.com/in/mariodearaujocarvalho/)
