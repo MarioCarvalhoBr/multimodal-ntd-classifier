@@ -1,3 +1,4 @@
+# FUTURE WORK
 from pathlib import Path
 
 # Only these two VLMs are supported for multimodal fusion
@@ -31,10 +32,10 @@ SUPPORTED_EXTENSIONS = ('.jpg', '.jpeg', '.png')
 
 # Late-fusion weights: must sum to 1.0
 PESOS = {
-    "MODELO": 0.4,   # fine-tuned linear probe score
+    "MODELO": 0.5,   # fine-tuned linear probe score
     "IMAGEM": 0.3,   # cosine similarity to indexed images (VectorDB)
-    "TEXTO":  0.3,   # cosine similarity to indexed text descriptions (VectorDB)
+    "TEXTO":  0.2,   # cosine similarity to indexed text descriptions (VectorDB)
 }
 
 # Number of nearest neighbours to retrieve per query
-TOP_K = 10
+TOP_K = 8
