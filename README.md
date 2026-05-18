@@ -123,7 +123,7 @@ Only `openai/clip-vit-base-patch16` and `google/siglip-base-patch16-224` are sup
 
 ---
 
-## Multimodal Late Fusion
+## Multimodal Late Fusion (For the future, not implemented yet)
 
 `run_test_multimodal.py` combines three independent signals per image:
 
