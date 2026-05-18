@@ -18,6 +18,7 @@ const TRANSLATIONS = {
     image_label:      'Clinical / Microscopy Image',
     upload_prompt:    'Click to select an image',
     upload_hint:      'PNG, JPG, JPEG up to 10 MB',
+    btn_zoom:         'Enlarge image',
     btn_analyze:      'Analyze Image',
     btn_processing:   'Processing on server…',
 
@@ -113,6 +114,7 @@ const TRANSLATIONS = {
     image_label:      'Imagem Clínica / Microscópica',
     upload_prompt:    'Clique para selecionar uma imagem',
     upload_hint:      'PNG, JPG, JPEG até 10 MB',
+    btn_zoom:         'Ampliar imagem',
     btn_analyze:      'Analisar Imagem',
     btn_processing:   'Processando no servidor…',
 
@@ -208,6 +210,7 @@ const TRANSLATIONS = {
     image_label:      'Imagen Clínica / Microscópica',
     upload_prompt:    'Haga clic para seleccionar una imagen',
     upload_hint:      'PNG, JPG, JPEG hasta 10 MB',
+    btn_zoom:         'Ampliar imagen',
     btn_analyze:      'Analizar Imagen',
     btn_processing:   'Procesando en el servidor…',
 

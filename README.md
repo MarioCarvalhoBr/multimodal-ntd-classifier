@@ -15,10 +15,12 @@ A research proof-of-concept benchmarking frozen Vision-Language Model (VLM) and 
 
 | | |
 |---|---|
-| ![Figure 1](assets/FIGURE_01.png) | ![Figure 2](assets/FIGURE_02.png) |
-| ![Figure 3](assets/FIGURE_03.png) | ![Figure 4](assets/FIGURE_04.png) |
+| ![Figure 1](assets/desktop/FIGURE_01.png) | ![Figure 2](assets/desktop/FIGURE_02.png) |
+| ![Figure 3](assets/desktop/FIGURE_03.png) | ![Figure 4](assets/desktop/FIGURE_04.png) |
 
 ---
+
+### More screenshots Desktop and Mobile see file [SCREENSHOTS.md](SCREENSHOTS.md).
 
 ## Overview
 

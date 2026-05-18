@@ -81,20 +81,30 @@
                     <label class="block text-sm font-semibold text-slate-600 mb-2">
                         {{ t('image_label') }}
                     </label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl hover:border-indigo-500 transition bg-white relative cursor-pointer"
-                         @click="$refs.fileInput.click()">
-                        <div class="space-y-1 text-center">
-                            <i v-if="!imagePreview" class="fa-solid fa-cloud-arrow-up text-4xl text-slate-400 mb-3"></i>
-                            <img v-if="imagePreview" :src="imagePreview" class="max-h-48 mx-auto rounded shadow-sm mb-3">
-                            <div class="flex text-sm text-slate-600 justify-center">
-                                <span class="font-medium text-indigo-600 hover:text-indigo-500">
-                                    {{ file ? file.name : t('upload_prompt') }}
-                                    <input ref="fileInput" type="file" class="sr-only"
-                                           accept="image/*" @change="handleFileUpload">
-                                </span>
+                    <div class="mt-1 border-2 border-slate-300 border-dashed rounded-xl hover:border-indigo-500 transition bg-white relative">
+                        <!-- Click anywhere (except the zoom button) to pick a file -->
+                        <div class="flex justify-center px-6 pt-5 pb-6 cursor-pointer"
+                             @click="$refs.fileInput.click()">
+                            <div class="space-y-1 text-center">
+                                <i v-if="!imagePreview" class="fa-solid fa-cloud-arrow-up text-4xl text-slate-400 mb-3"></i>
+                                <img v-if="imagePreview" :src="imagePreview" class="max-h-48 mx-auto rounded shadow-sm mb-3">
+                                <div class="flex text-sm text-slate-600 justify-center">
+                                    <span class="font-medium text-indigo-600 hover:text-indigo-500">
+                                        {{ file ? file.name : t('upload_prompt') }}
+                                        <input ref="fileInput" type="file" class="sr-only"
+                                               accept="image/*" @change="handleFileUpload">
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500">{{ t('upload_hint') }}</p>
                             </div>
-                            <p class="text-xs text-slate-500">{{ t('upload_hint') }}</p>
                         </div>
+                        <!-- Zoom button — only visible when an image is loaded -->
+                        <button v-if="imagePreview"
+                                @click.stop="openImageModal()"
+                                :title="t('btn_zoom')"
+                                class="absolute top-2 right-2 bg-white bg-opacity-90 hover:bg-indigo-600 hover:text-white text-slate-600 rounded-full w-8 h-8 flex items-center justify-center shadow transition-colors">
+                            <i class="fa-solid fa-magnifying-glass-plus text-sm"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -300,6 +310,81 @@
                     </div>
 
                 </div>
+            </div>
+        </div>
+    </Transition>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MODAL: Image lightbox
+    ═══════════════════════════════════════════════════════════════════ -->
+    <Transition name="fade">
+        <div v-if="showImageModal && imagePreview"
+             class="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
+
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-black bg-opacity-90" @click="closeImageModal()"></div>
+
+            <!-- Dialog -->
+            <div class="relative z-10 flex flex-col items-center w-full max-w-5xl">
+
+                <!-- Close button -->
+                <button @click="closeImageModal()"
+                        :title="t('modal_close')"
+                        class="absolute -top-3 -right-3 bg-white text-slate-700 hover:bg-rose-600 hover:text-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg transition-colors z-20">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+
+                <!-- Scrollable image viewport -->
+                <div class="overflow-auto rounded-xl w-full"
+                     style="max-height: 78vh; scrollbar-width: thin; scrollbar-color: #6366f1 #1e1b4b;">
+                    <!-- Inner wrapper: actual size changes so overflow scroll works -->
+                    <div class="flex items-center justify-center"
+                         :style="{ minHeight: imageZoom > 1 ? (imageZoom * 78) + 'vh' : '0', minWidth: imageZoom > 1 ? (imageZoom * 100) + '%' : '0' }">
+                        <img :src="imagePreview"
+                             :style="{
+                                 transform: 'scale(' + imageZoom + ')',
+                                 transformOrigin: 'center center',
+                                 transition: 'transform 0.2s ease',
+                             }"
+                             class="block rounded-lg shadow-2xl object-contain max-h-[75vh] max-w-full">
+                    </div>
+                </div>
+
+                <!-- Controls bar -->
+                <div class="mt-4 flex items-center gap-3 bg-black bg-opacity-60 backdrop-blur-sm rounded-full px-5 py-2 shadow-xl">
+
+                    <!-- Zoom out -->
+                    <button @click="zoomOut()"
+                            :disabled="imageZoom <= 1.0"
+                            class="w-8 h-8 flex items-center justify-center rounded-full text-white disabled:opacity-30 hover:bg-white hover:bg-opacity-20 transition-colors"
+                            title="Zoom out">
+                        <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    </button>
+
+                    <!-- Level indicator + reset on click -->
+                    <button @click="resetZoom()"
+                            class="text-white text-sm font-mono w-14 text-center hover:text-indigo-300 transition-colors"
+                            title="Reset zoom">
+                        {{ Math.round(imageZoom * 100) }}%
+                    </button>
+
+                    <!-- Zoom in -->
+                    <button @click="zoomIn()"
+                            :disabled="imageZoom >= 4.0"
+                            class="w-8 h-8 flex items-center justify-center rounded-full text-white disabled:opacity-30 hover:bg-white hover:bg-opacity-20 transition-colors"
+                            title="Zoom in">
+                        <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    </button>
+
+                    <!-- Divider -->
+                    <span class="text-white text-opacity-30 select-none">|</span>
+
+                    <!-- File name -->
+                    <span v-if="file" class="text-white text-xs opacity-60 max-w-xs truncate">
+                        {{ file.name }}
+                    </span>
+                </div>
+
             </div>
         </div>
     </Transition>

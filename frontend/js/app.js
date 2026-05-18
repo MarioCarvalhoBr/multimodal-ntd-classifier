@@ -17,6 +17,8 @@ createApp({
             predictions: [],
             showDiseaseModal: false,
             showAbout: false,
+            showImageModal: false,
+            imageZoom: 1.0,
             selectedDiseaseInfo: null,
             apiUrl: "http://127.0.0.1:8000",
 
@@ -92,5 +94,18 @@ createApp({
             this.selectedDiseaseInfo = this.getDiseaseInfo(classId);
             if (this.selectedDiseaseInfo) this.showDiseaseModal = true;
         },
+
+        // ── Lightbox zoom ────────────────────────────────────────────────────
+        openImageModal() {
+            this.imageZoom = 1.0;
+            this.showImageModal = true;
+        },
+        closeImageModal() {
+            this.showImageModal = false;
+            this.imageZoom = 1.0;
+        },
+        zoomIn()    { if (this.imageZoom < 4.0) this.imageZoom = Math.round((this.imageZoom + 0.5) * 10) / 10; },
+        zoomOut()   { if (this.imageZoom > 1.0) this.imageZoom = Math.round((this.imageZoom - 0.5) * 10) / 10; },
+        resetZoom() { this.imageZoom = 1.0; },
     },
 }).mount('#app');
