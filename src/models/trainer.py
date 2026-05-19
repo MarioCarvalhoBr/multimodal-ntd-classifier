@@ -262,9 +262,9 @@ class ModelTrainer:
                         ha="center", va="center",
                         fontsize=13, weight="bold", color=cor_texto)
         
-        plt.title(f'Matriz de Confusão - {model_tag}', fontsize=16, pad=20, weight='bold')
-        plt.ylabel('Classe Verdadeira (True Label)', fontsize=14, weight='bold')
-        plt.xlabel('Classe Prevista (Predicted Label)', fontsize=14, weight='bold')
+        plt.title(f'Confusion Matrix - {model_tag}', fontsize=16, pad=20, weight='bold')
+        plt.ylabel('True Label', fontsize=14, weight='bold')
+        plt.xlabel('Predicted Label', fontsize=14, weight='bold')
         
         plt.xticks(rotation=45, ha="right", fontsize=12)
         plt.yticks(rotation=0, fontsize=12)
