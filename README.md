@@ -1,4 +1,4 @@
-# Multimodal Vision-Language Classifier for Neglected Tropical Diseases
+#  Multimodal Artificial Intelligence for Aided Diagnosis of Neglected Tropical Diseases: A Comparative Study of Visual Architectures
 
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.2-ee4c2c)
