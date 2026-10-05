@@ -291,23 +291,29 @@ poetry run python src/gpu_available.py
 
 If you use this code in your research, please cite our work submitted to I CADTN:
 
-Repository citation in BibTeX format:
+Citation for the repository and the article in BibTeX format:
 ```bibtex
-@misc{carvalho2026ntdclassifier,
-  author  = {Mário de Araújo Carvalho, Allison Oliveira Miranda, Celso Soares Costa, Wesley Nunes Gonçalves},
-  title   = {Multimodal Vision-Language Classifier for Neglected Tropical Diseases},
-  year    = {2026},
-  url     = {https://github.com/MarioCarvalhoBr/multimodal-ntd-classifier}
+
+@inproceedings{carvalho_multimodal_2026,
+	address = {Brasil},
+	title = {Multimodal {Artificial} {Intelligence} for {Aided} {Diagnosis} of {Neglected} {Tropical} {Diseases}: {A} {Comparative} {Study} of {Visual} {Architectures}},
+	shorttitle = {Multimodal {Artificial} {Intelligence} for {Aided} {Diagnosis} of {Neglected} {Tropical} {Diseases}},
+	url = {https://sol.sbc.org.br/index.php/sbcas_estendido/article/view/43830},
+	doi = {10.5753/sbcas_estendido.2026.26536},
+	abstract = {},
+	urldate = {2026-10-05},
+	booktitle = {Anais {Estendidos} do {XXVI} {Simpósio} {Brasileiro} de {Computação} {Aplicada} à {Saúde} ({SBCAS} 2026)},
+	publisher = {Sociedade Brasileira de Computação (SBC)},
+	author = {Carvalho, Mário De Araújo and Miranda, Allison Oliveira and Costa, Celso Soares and Gonçalves, Wesley Nunes},
+	month = jun,
+	year = {2026},
+	pages = {253--267},
 }
 ```
-Papper citation in BibTeX format:
+Citation for the repository and the article in APA Style 7th edition format:
+
 ```bibtex
-@misc{carvalho2026papercadtn,
-  author  = {Mário de Araújo Carvalho, Allison Oliveira Miranda, Celso Soares Costa, Wesley Nunes Gonçalves},
-  title   = {Multimodal Artificial Intelligence for Aided Diagnosis of Neglected Tropical Diseases: A Comparative Study of Visual Architectures},
-  year    = {2026},
-  url     = {https://github.com/MarioCarvalhoBr/multimodal-ntd-classifier}
-}
+Carvalho, M. D. A., Miranda, A. O., Costa, C. S., & Gonçalves, W. N. (2026). Multimodal artificial intelligence for aided diagnosis of neglected tropical diseases: A comparative study of visual architectures. Anais Estendidos do XXVI Simpósio Brasileiro de Computação Aplicada à Saúde (SBCAS 2026), 253–267. https://doi.org/10.5753/sbcas_estendido.2026.26536
 ```
 
 ## License
